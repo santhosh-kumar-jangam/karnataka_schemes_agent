@@ -26,21 +26,6 @@ session_service = DatabaseSessionService(db_url="sqlite:///" + SESSIONS_DB_PATH)
 APP_NAME = "gov-scheme-app"
 USER_ID = "User123"
 
-@app.post("/create-new-session")
-async def create_new_session():
-    try:
-        # Create a brand new session
-        session = await session_service.create_session(
-            app_name=APP_NAME,
-            user_id=USER_ID
-        )
-        return {
-            "message": "New session created successfully",
-            "session_id": session.id
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
 # request body model
 class AgentRequest(BaseModel):
     query: str
@@ -64,7 +49,8 @@ async def run_agent(body: AgentRequest):
         else:
             session = await session_service.create_session(
                 app_name=APP_NAME,
-                user_id=USER_ID
+                user_id=USER_ID,
+                session_id=body.session_id
             )
 
         content = Content(role="user", parts=[Part(text=body.query)])
@@ -89,20 +75,5 @@ async def run_agent(body: AgentRequest):
 
         return {"response": full_response_text, "session_id": session.id}
 
-    except Exception as e:
-        return {"error": str(e)}
-    
-@app.delete("/delete-session/{session_id}")
-async def delete_session(session_id: str):
-    try:
-        deleted = await session_service.delete_session(
-            app_name=APP_NAME,
-            user_id=USER_ID,
-            session_id=session_id
-        )
-        if deleted:
-            return {"message": f"Session {session_id} deleted successfully"}
-        else:
-            return {"error": f"Session {session_id} not found"}
     except Exception as e:
         return {"error": str(e)}
