@@ -1,6 +1,6 @@
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from .tools import save_application, check_application_status, find_eligible_schemes, fetch_user_profile
+from .tools import save_application, check_application_status, find_eligible_schemes, fetch_user_profile, generate_application_pdf
 
 root_agent = LlmAgent(
     name="GovSchemeAgent",
@@ -65,7 +65,8 @@ root_agent = LlmAgent(
             - **If the user confirms ('yes', 'proceed', 'submit it'):**
                 - Generate a UUID (application ID).
                 - Use the `save_application` tool to store the application in the database, Pass the collected Aadhaar number, applicant name, phone number, and chosen scheme.
-                - Confirm to the user that the application has been submitted successfully, providing the application ID.
+                - Immediately after that, you MUST call the `generate_application_pdf` tool. You must pass the generated application_id and a complete JSON object of all the collected information to this tool.
+                - Then, confirm to the user that the application has been submitted successfully, providing the application ID.
             - **If the user denies or is unsure ('no', 'wait', 'cancel'):**
                 - Acknowledge their decision. DO NOT Generate a UUID (application ID) or call the `save_application` tool.
                 - Politely ask if they would like to explore other schemes or apply for a different one. This gracefully transitions the conversation back to the discovery phase.
@@ -90,5 +91,5 @@ root_agent = LlmAgent(
     - Always provide the final Application ID to the user once submission is complete.
     - Make sure the whole process is Authentic as the real application process.
     """,
-    tools=[fetch_user_profile, find_eligible_schemes ,save_application, check_application_status]
+    tools=[fetch_user_profile, find_eligible_schemes ,save_application, check_application_status, generate_application_pdf]
 )

@@ -193,3 +193,94 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
         return json.dumps({"message": "No schemes found matching your criteria."})
     
     return json.dumps(schemes_raw)
+
+def generate_application_pdf(application_data_json: str, application_id: str) -> str:
+    # (The corrected function code from above)
+    # ...
+    import json
+    import os
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import Paragraph
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.enums import TA_LEFT
+
+    def flatten_nested_data(data_dict, parent_key='', separator=' - '):
+        """Helper function to flatten nested dictionary."""
+        flattened = {}
+        for key, value in data_dict.items():
+            new_key = f"{parent_key}{separator}{key}" if parent_key else key
+            if isinstance(value, dict):
+                flattened.update(flatten_nested_data(value, new_key, separator))
+            elif isinstance(value, list):
+                if all(isinstance(item, str) for item in value):
+                    flattened[new_key] = ", ".join(value)
+                else:
+                    for i, item in enumerate(value, 1):
+                        flattened[f"{new_key} {i}"] = str(item)
+            else:
+                flattened[new_key] = value
+        return flattened
+
+    try:
+        data_dict = json.loads(application_data_json)
+        flattened_data = flatten_nested_data(data_dict)
+        filename = f"{application_id}.pdf"
+        
+        c = canvas.Canvas(filename, pagesize=letter)
+        width, height = letter
+        c.setTitle("Application Information")
+        
+        styles = getSampleStyleSheet()
+        style_label = styles['BodyText']
+        style_label.fontName = 'Helvetica-Bold'
+        style_value = styles['BodyText']
+        style_value.alignment = TA_LEFT
+        
+        heading_text = "Application Details"
+        c.setFont("Helvetica-Bold", 18)
+        c.drawCentredString(width / 2.0, height - 40, heading_text)
+        
+        y_position = height - 80
+        x_label = 50
+        x_value = 220
+        entry_spacing = 15
+
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(x_label, y_position, "Application ID:")
+        c.setFont("Helvetica", 12)
+        c.drawString(x_value, y_position, application_id)
+        y_position -= 40
+
+        for key, value in flattened_data.items():
+            formatted_key = key.replace('_', ' ').replace(' - ', ' ').title() + ':'
+            value_str = str(value)
+            
+            label_p = Paragraph(formatted_key, style_label)
+            value_p = Paragraph(value_str, style_value)
+            
+            label_available_width = x_value - x_label - 10
+            value_available_width = width - x_value - 50
+            
+            label_p.wrapOn(c, label_available_width, height)
+            value_w, value_h = value_p.wrap(value_available_width, height)
+            
+            entry_height = max(label_p.height, value_h)
+            
+            if y_position - entry_height < 60:
+                c.showPage()
+                y_position = height - 60
+            
+            y_position -= entry_height
+            
+            label_p.drawOn(c, x_label, y_position)
+            value_p.drawOn(c, x_value, y_position)
+            
+            y_position -= entry_spacing
+            
+        c.save()
+        pdf_path = os.path.abspath(filename)
+        return json.dumps({"pdf_path": pdf_path})
+
+    except Exception as e:
+        return json.dumps({"error": f"Failed to generate PDF: {str(e)}"})
