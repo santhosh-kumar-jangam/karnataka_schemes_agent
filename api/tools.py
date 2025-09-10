@@ -109,31 +109,40 @@ def fetch_user_profile(aadhaar_number: str) -> str:
 def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") -> str:
     """
     Finds government schemes from the database. It can perform three types of searches:
-    1. Personalized Search: If a 'user_profile_json' is provided, it finds schemes the user is eligible for based on age, income, community, gender, and location.
-    2. Specific Search: If a 'scheme_name' is provided, it fetches details for that specific scheme.
-    3. General Search: If no arguments are provided, it lists all available schemes.
+    1. Personalized Search: Finds schemes a user is eligible for based on their profile.
+    2. Specific Search: Fetches details for a specific scheme by name.
+    3. General Search: Lists all available schemes.
+
+    This version now returns the 'required_information' and 'supporting_documents' for each scheme,
+    which is essential for the agent's application flow.
 
     Args:
         user_profile_json: A JSON string containing a user's profile (age, gender, income, community, district).
         scheme_name: The partial or full name of a specific scheme to search for.
 
     Returns:
-        A JSON string containing a list of matching schemes or a message if none are found.
+        A JSON string containing a list of matching schemes, including lists for required information and documents.
     """
     import sqlite3
-    import json, os
-
+    import json
+    import os
     from dotenv import load_dotenv
-    load_dotenv()
 
+    load_dotenv()
     DB_PATH = os.getenv("SCHEMES_DB_PATH")
+
+    if not os.path.exists(DB_PATH):
+        return json.dumps({"error": f"Database file not found at path: {DB_PATH}"})
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     base_query = """
-        SELECT s.id, s.name, d.name as department_name, s.definition, s.eligibility_summary, s.application_fee
+        SELECT
+            s.id, s.name, d.name as department_name, s.definition,
+            s.eligibility_summary, s.application_fee,
+            s.required_information, s.supporting_documents
         FROM schemes s
         JOIN departments d ON s.department_id = d.id
         JOIN scheme_geographies sg ON s.id = sg.scheme_id
@@ -161,7 +170,6 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
                     conditions.append("(sg.district = ? OR sg.district = 'All Districts')")
                     params.append(profile['district'])
                 if 'community' in profile:
-                    # This check handles JSON arrays in SQLite
                     conditions.append("EXISTS (SELECT 1 FROM json_each(s.community_eligibility) WHERE value = ? OR value = 'General')")
                     params.append(profile['community'])
         except (json.JSONDecodeError, KeyError):
@@ -173,9 +181,15 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
         query = f"{base_query} GROUP BY s.id"
 
     cursor.execute(query, params)
-    schemes = [dict(row) for row in cursor.fetchall()]
+    schemes_raw = [dict(row) for row in cursor.fetchall()]
     conn.close()
 
-    if not schemes:
+    # PROCESS JSON FIELDS: Convert the JSON strings from the DB into actual lists for the agent to use.
+    for scheme in schemes_raw:
+        scheme['required_information'] = json.loads(scheme.get('required_information') or '[]')
+        scheme['supporting_documents'] = json.loads(scheme.get('supporting_documents') or '[]')
+
+    if not schemes_raw:
         return json.dumps({"message": "No schemes found matching your criteria."})
-    return json.dumps(schemes)
+    
+    return json.dumps(schemes_raw)
