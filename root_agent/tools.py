@@ -67,43 +67,115 @@ def check_application_status(application_uuid: str) -> dict:
     else:
         return {"error": "Application not found"}
     
+def calculate_age(dob_str):
+    from datetime import datetime, date
+    born = datetime.strptime(dob_str, "%Y-%m-%d").date()
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
-from typing import Union
-
-def api_gateway(endpoint:str, method:str, query_params: Union[dict, None], body: Union[dict, None]) -> dict :
+def fetch_user_profile(aadhaar_number: str) -> str:
     """
-    Universal API Gateway to interact with any API endpoint.
+    Simulates fetching user data from DigiLocker using their Aadhaar number.
+    It retrieves the user's profile from a local database.
 
     Args:
-        endpoint (str): API endpoint URL.
-        method (str): HTTP method (e.g., "GET", "POST", "PUT", etc.).
-        query_params (Union[dict, None]): Dictionary of query parameters. Pass None if not applicable.
-        body (Union[dict, None]): Dictionary of request body data. Pass None if not applicable.
+        aadhaar_number: The 12-digit Aadhaar number of the user.
 
     Returns:
-        dict: Response received from the API call.
-
-    Raises:
-        ValueError: If any mandatory parameter is omitted.
+        A JSON string containing the user's profile if found, otherwise an error message.
     """
-    import requests
+    import sqlite3
+    import json, os
 
-    match method.upper():
-        case "GET":
-            response = requests.get(endpoint, params=query_params)
-        case "POST":
-            response = requests.post(endpoint, params=query_params, json=body)
-        case "PUT":
-            response = requests.put(endpoint, params=query_params, json=body)
-        case "DELETE":
-            response = requests.delete(endpoint, params=query_params, json=body)
-        case _:
-            return {
-                "status_code": 400,
-                "response_body": f"Unsupported HTTP method: {method}"
-            }
+    from dotenv import load_dotenv
+    load_dotenv()
 
-    return {
-        "status_code": response.status_code,
-        "response_body": response.json() if response.headers.get("Content-Type", "").startswith("application/json") else response.text
-    }
+    DB_PATH = os.getenv("USERS_DB_PATH")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM user_details WHERE aadhaar_number = ?", (aadhaar_number,))
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        user_dict = dict(user)
+        user_dict['age'] = calculate_age(user_dict['dob'])
+        return json.dumps(user_dict)
+    else:
+        return json.dumps({"error": "No user profile found for the provided Aadhaar number."})
+    
+
+def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") -> str:
+    """
+    Finds government schemes from the database. It can perform three types of searches:
+    1. Personalized Search: If a 'user_profile_json' is provided, it finds schemes the user is eligible for based on age, income, community, gender, and location.
+    2. Specific Search: If a 'scheme_name' is provided, it fetches details for that specific scheme.
+    3. General Search: If no arguments are provided, it lists all available schemes.
+
+    Args:
+        user_profile_json: A JSON string containing a user's profile (age, gender, income, community, district).
+        scheme_name: The partial or full name of a specific scheme to search for.
+
+    Returns:
+        A JSON string containing a list of matching schemes or a message if none are found.
+    """
+    import sqlite3
+    import json, os
+
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    DB_PATH = os.getenv("SCHEMES_DB_PATH")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    base_query = """
+        SELECT s.id, s.name, d.name as department_name, s.definition, s.eligibility_summary, s.application_fee
+        FROM schemes s
+        JOIN departments d ON s.department_id = d.id
+        JOIN scheme_geographies sg ON s.id = sg.scheme_id
+    """
+    params = []
+    conditions = []
+
+    if scheme_name:
+        conditions.append("s.name LIKE ?")
+        params.append(f"%{scheme_name}%")
+    else:
+        try:
+            profile = json.loads(user_profile_json)
+            if profile:
+                if 'age' in profile:
+                    conditions.append("(s.min_age <= ? AND s.max_age >= ?)")
+                    params.extend([profile['age'], profile['age']])
+                if 'gender' in profile:
+                    conditions.append("s.gender_eligibility IN (?, 'Any')")
+                    params.append(profile['gender'])
+                if 'annual_income' in profile:
+                    conditions.append("s.max_annual_income >= ?")
+                    params.append(profile['annual_income'])
+                if 'district' in profile:
+                    conditions.append("(sg.district = ? OR sg.district = 'All Districts')")
+                    params.append(profile['district'])
+                if 'community' in profile:
+                    # This check handles JSON arrays in SQLite
+                    conditions.append("EXISTS (SELECT 1 FROM json_each(s.community_eligibility) WHERE value = ? OR value = 'General')")
+                    params.append(profile['community'])
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    if conditions:
+        query = f"{base_query} WHERE {' AND '.join(conditions)} GROUP BY s.id"
+    else:
+        query = f"{base_query} GROUP BY s.id"
+
+    cursor.execute(query, params)
+    schemes = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    if not schemes:
+        return json.dumps({"message": "No schemes found matching your criteria."})
+    return json.dumps(schemes)

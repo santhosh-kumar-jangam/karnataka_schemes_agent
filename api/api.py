@@ -21,30 +21,16 @@ app.add_middleware(
 )
 
 SESSIONS_DB_PATH=os.getenv("SESSIONS_DB_PATH")
+print("db_path:", SESSIONS_DB_PATH)
 session_service = DatabaseSessionService(db_url="sqlite:///" + SESSIONS_DB_PATH)
 
 APP_NAME = "gov-scheme-app"
 USER_ID = "User123"
 
-@app.post("/create-new-session")
-async def create_new_session():
-    try:
-        # Create a brand new session
-        session = await session_service.create_session(
-            app_name=APP_NAME,
-            user_id=USER_ID
-        )
-        return {
-            "message": "New session created successfully",
-            "session_id": session.id
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
 # request body model
 class AgentRequest(BaseModel):
     query: str
-    session_id: str | None = None
+    session_id: str
 
 @app.post("/agent/run")
 async def run_agent(body: AgentRequest):
@@ -59,13 +45,14 @@ async def run_agent(body: AgentRequest):
         # reuse session if provided, else create a new one
         if body.session_id:
             session = await session_service.get_session(app_name=APP_NAME, user_id=USER_ID ,session_id=body.session_id)
-            if not session:
-                return {"error": f"Session with id {body.session_id} not found"}
-        else:
-            session = await session_service.create_session(
-                app_name=APP_NAME,
-                user_id=USER_ID
-            )
+            if session is None:
+                session = await session_service.create_session(
+                    app_name=APP_NAME,
+                    user_id=USER_ID,
+                    session_id=body.session_id
+                )
+                
+        print("session object:", session)
 
         content = Content(role="user", parts=[Part(text=body.query)])
 
@@ -89,20 +76,5 @@ async def run_agent(body: AgentRequest):
 
         return {"response": full_response_text, "session_id": session.id}
 
-    except Exception as e:
-        return {"error": str(e)}
-    
-@app.delete("/delete-session/{session_id}")
-async def delete_session(session_id: str):
-    try:
-        deleted = await session_service.delete_session(
-            app_name=APP_NAME,
-            user_id=USER_ID,
-            session_id=session_id
-        )
-        if deleted:
-            return {"message": f"Session {session_id} deleted successfully"}
-        else:
-            return {"error": f"Session {session_id} not found"}
     except Exception as e:
         return {"error": str(e)}
