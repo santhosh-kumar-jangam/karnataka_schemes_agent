@@ -78,3 +78,33 @@ async def run_agent(body: AgentRequest):
 
     except Exception as e:
         return {"error": str(e)}
+    
+@app.post("/create-new-session")
+async def create_new_session():
+    try:
+        # Create a brand new session
+        session = await session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID
+        )
+        return {
+            "message": "New session created successfully",
+            "session_id": session.id
+        }
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.delete("/delete-session/{session_id}")
+async def delete_session(session_id: str):
+    try:
+        deleted = await session_service.delete_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+        if deleted:
+            return {"message": f"Session {session_id} deleted successfully"}
+        else:
+            return {"error": f"Session {session_id} not found"}
+    except Exception as e:
+        return {"error": str(e)}
