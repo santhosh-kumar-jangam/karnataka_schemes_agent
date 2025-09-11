@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google.adk.sessions import DatabaseSessionService
@@ -71,15 +72,13 @@ async def run_agent(body: AgentRequest):
             print(f"Author: {event.author}")
             
             if hasattr(event, 'content') and event.content:
-                 print(f"Content Parts: {[part.text for part in event.content.parts]}")
+                print(f"Content Parts: {[part.text for part in event.content.parts]}")
             print("-----------------------\n")
             print(f"Event received from: {event.author}")
             if not (event.content and event.content.parts):
                 continue
 
             for part in event.content.parts:
-                # We are ONLY interested in the 'function_response' part.
-                # Check if the attribute exists AND is not None before proceeding.
                 if hasattr(part, 'function_response') and part.function_response is not None:
                     
                     func_response = part.function_response
@@ -115,15 +114,42 @@ async def run_agent(body: AgentRequest):
     except Exception as e:
         return {"error": str(e)}
 
-
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-API_FOLDER_PATH = r"C:\Users\Yaswanth\karnataka_schemes_agent\api"
-PROJECT_ROOT_PATH = r"C:\Users\Yaswanth\karnataka_schemes_agent"
-
+@app.post("/create-new-session")
+async def create_new_session():
+    try:
+        # Create a brand new session
+        session = await session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID
+        )
+        return {
+            "message": "New session created successfully",
+            "session_id": session.id
+        }
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.delete("/delete-session/{session_id}")
+async def delete_session(session_id: str):
+    try:
+        deleted = await session_service.delete_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+        if deleted:
+            return {"message": f"Session {session_id} deleted successfully"}
+        else:
+            return {"error": f"Session {session_id} not found"}
+    except Exception as e:
+        return {"error": str(e)}
+    
 @app.get("/download/application/{filename}")
 async def download_application_pdf(filename: str):
-    """ Serves a PDF file, checking in multiple possible locations. """
+    """ Serves a PDF file"""
+
+    API_FOLDER_PATH = os.getenv("API_FOLDER_PATH")
+    PROJECT_ROOT_PATH = os.getenv("PROJECT_ROOT_PATH")
     try:
         if ".." in filename or "/" in filename or "\\" in filename:
             raise HTTPException(status_code=400, detail="Invalid filename format.")
