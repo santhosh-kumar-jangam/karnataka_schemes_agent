@@ -279,8 +279,10 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
             y_position -= entry_spacing
             
         c.save()
-        pdf_path = os.path.abspath(filename)
-        return json.dumps({"pdf_path": pdf_path})
+        # pdf_path = os.path.abspath(filename)
+        # return json.dumps({"pdf_path": pdf_path})
+        print(f"PDF successfully generated in the API folder: {filename}")
+        return {"filename": filename}
 
     except Exception as e:
         return json.dumps({"error": f"Failed to generate PDF: {str(e)}"})
