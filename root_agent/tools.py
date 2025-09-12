@@ -159,7 +159,7 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
             if profile:
                 if 'age' in profile:
                     conditions.append("(s.min_age <= ? AND s.max_age >= ?)")
-                    params.extend([profile['age'], profile['age']])
+                    params.extend([profile['age']])
                 if 'gender' in profile:
                     conditions.append("s.gender_eligibility IN (?, 'Any')")
                     params.append(profile['gender'])
@@ -194,7 +194,72 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
     
     return json.dumps(schemes_raw)
 
+def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
+    """
+    Fetches a list of government schemes along with all their eligibility criteria.
+
+    Args:
+        scheme_name: If provided, fetches only the specific scheme matching the name.
+                     If empty, fetches all schemes.
+
+    Returns:
+        A JSON string containing a list of schemes, each with its full set of criteria
+        (min_age, max_income, community, etc.) for the agent to analyze.
+    """
+    import sqlite3
+    import json
+    import os
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    DB_PATH = os.getenv("SCHEMES_DB_PATH", "karnataka_schemes.db")
+
+    if not os.path.exists(DB_PATH):
+        return json.dumps({"error": "Database file not found."})
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # The SELECT statement now fetches ALL criteria columns for the agent to use.
+    base_query = """
+        SELECT
+            s.id, s.name, d.name as department_name, s.definition,
+            s.eligibility_summary, s.application_fee, s.required_information, s.supporting_documents,
+            s.min_age, s.max_age, s.gender_eligibility, s.max_annual_income, s.community_eligibility,
+            sg.district
+        FROM schemes s
+        JOIN departments d ON s.department_id = d.id
+        JOIN scheme_geographies sg ON s.id = sg.scheme_id
+    """
+    params = []
+    
+    if scheme_name:
+        query = f"{base_query} WHERE s.name LIKE ? GROUP BY s.id"
+        params.append(f"%{scheme_name}%")
+    else:
+        # If no specific name, fetch ALL schemes.
+        query = f"{base_query} GROUP BY s.id"
+
+    cursor.execute(query, params)
+    schemes_raw = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    # Process JSON fields before returning
+    for scheme in schemes_raw:
+        scheme['required_information'] = json.loads(scheme.get('required_information') or '[]')
+        scheme['supporting_documents'] = json.loads(scheme.get('supporting_documents') or '[]')
+        scheme['community_eligibility'] = json.loads(scheme.get('community_eligibility') or '[]')
+
+
+    if not schemes_raw:
+        return json.dumps({"message": "No schemes found."})
+    
+    return json.dumps(schemes_raw)
+
 def generate_application_pdf(application_data_json: str, application_id: str) -> str:
+    # (The corrected function code from above)
+    # ...
     import json
     import os
     from reportlab.pdfgen import canvas

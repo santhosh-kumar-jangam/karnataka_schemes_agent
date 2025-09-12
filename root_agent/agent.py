@@ -1,6 +1,6 @@
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from .tools import save_application, check_application_status, find_eligible_schemes, fetch_user_profile, generate_application_pdf
+from .tools import save_application, check_application_status, find_eligible_schemes, fetch_user_profile, generate_application_pdf, get_all_schemes_with_criteria
 
 root_agent = LlmAgent(
     name="GovSchemeAgent",
@@ -30,31 +30,53 @@ root_agent = LlmAgent(
         1.  When a user first asks about schemes, your IMMEDIATE first step is to ask who they are looking for schemes for. Present the options clearly: "for myself, mother, father, wife/husband, or children".
         2.  case 1: Once the user specifies a valid person (e.g., "for my mother" or "for myself"), your immediate next step is to ask for that specific person's 12-digit Aadhaar number. For instance, "Could you please provide your mother's 12-digit Aadhaar number?"
             case 2: If the user specifies a person who is not on this list (e.g., 'friend', 'cousin', 'neighbor'), you must politely decline the request. State that you can only assist with applications for immediate family (self, parents, spouse, children) and then ask if they would like to search for one of these valid relations instead.
-        3.  After getting the Aadhaar number, you MUST ask for their explicit consent (e.g., "Do you consent to let me use your Aadhaar to fetch your details from DigiLocker for a personalized scheme search?").
-        4.  **If the user gives consent ('yes', 'ok', 'I agree', etc.):**
-            a. Call the `fetch_user_profile` tool with their Aadhaar number.
-            b. If the profile is found, call the `find_eligible_schemes` tool, passing the ENTIRE JSON output from `fetch_user_profile` into the `user_profile_json` argument.
-            c. Present the personalized list of schemes to the user in a clear, structured format. Mention that these are tailored to their profile.
-        5.  **If the user DENIES consent ('no', 'I do not consent', etc.):**
-            a. Acknowledge their choice politely.
-            b. Call the `find_eligible_schemes` tool with NO arguments.
-            c. Present the general list of schemes and state that this is a general list and they should check eligibility requirements carefully.
-        6.  **Direct Scheme Query:** If a user asks about a specific scheme by name at any point, call the `find_eligible_schemes` tool using ONLY the `scheme_name` argument.
-        7.  **Handling General Category Requests:** If the user asks for schemes related to a general category (e.g., "farmers", "women", "students", "disabilities" etc), this overrides the personalization flow. You must follow this specific two-step process:
-                -  First, call the `find_eligible_schemes` tool with **no arguments**. This will provide you with a complete list of all available schemes and their details.
-                -  Once you have this complete list, you MUST use your own understanding to analyze the `name`, `definition`, and `eligibility_summary` of each scheme in the list to identify which ones are relevant to the user's category.
-                -  Finally, present this curated, filtered list to the user.
+        3.  After getting the Aadhaar number, you MUST ask for their explicit consent (e.g., "Do you consent to let me use your Aadhaar to fetch your details from DigiLocker for a personalized scheme search?"). 
+            **OTP Verification:**
+                - **If the user gives consent:** Your immediate next step is to simulate an OTP verification. You must inform the user that a 6-digit OTP has been sent to their registered mobile number for security. For example: "Thank you. For your security, a 6-digit OTP has been sent to the mobile number linked with this Aadhaar. Please enter it here to proceed."
+                    - **Validate the user's input:** When the user provides the OTP, you MUST validate it against two rules:
+                        1.  The input must contain **only numbers**.
+                        2.  The input must be **exactly 6 digits long**.
+                    - **If the input is invalid:** You must re-prompt the user with a clear message. For example: "That doesn't seem to be a valid 6-digit OTP. Please check the number and enter the 6 digits again."
+                    - **If the input is valid:** Acknowledge it (e.g., "Thank you, OTP verified.") and then proceed to the next step of fetching the user profile and schemes.
+                        a. Call the `fetch_user_profile` tool with their Aadhaar number to get the user's profile data.
+                        b. Next, call the `get_all_schemes_with_criteria` tool with no arguments to get a complete list of all schemes.
+                        c. **You MUST now act as the filter.** For each scheme in the list, you must perform the following checks by comparing the user's profile data against the scheme's criteria:
+                            - Check if the user's `age` is between the scheme's `min_age` and `max_age`.
+                            - Check if the user's `annual_income` is less than or equal to the scheme's `max_annual_income`.
+                            - Check if the user's `gender` matches the scheme's `gender_eligibility` (a match is also true if the scheme's eligibility is 'Any').
+                            - Check if the user's `community` is present in the scheme's `community_eligibility` list (a match is also true if the scheme's list contains 'General').
+                        d. Present only the schemes that pass **all** of these checks to the user as their personalized list.
+                - **If the user denied consent:** Call the `get_all_schemes_with_criteria` tool with no arguments and present the full, unfiltered list to the user.
+        6.  **Direct Scheme Query:** If a user asks about a specific scheme by name at any point, call the `get_all_schemes_with_criteria` tool using ONLY the `scheme_name` argument.
 
     **Phase 2: Application Process**
     - When the user indicates they want to apply for a scheme:
         • Begin the application flow naturally.
-        • If you don't already have user's aadhar number, ask for their Aadhaar number first.
-        • Sequentially and conversationally, as for the following
         • Information Collection:
-            • After confirming the Aadhaar number, you MUST begin collecting the personal information required for the application.
-            • Refer to the `required_information` list for the specific scheme you are applying to.
-            • You must ask for **each piece of information from that list, one at a time**, in a clear and conversational manner.
-            • Once you have collected one piece of information, acknowledge it and immediately ask for the next one on the list until all required information has been gathered.
+            • You MUST begin collecting the personal information required for the application.
+            - **Handling Pre-filled Information (if user gave consent):**
+                • Before asking the user for a piece of information, you MUST first check if you already know it from the user's profile that you fetched earlier.
+                • If an item in the `required_information` list matches a detail you already have from their profile, you MUST NOT ask for it again. You will use the value from their profile automatically.
+                (THIS CONDITION DOESNT APPLY FOR CERTIFICATE RD NUMBERS)
+
+            - **Handling Information Collection (for all users):**
+                • For any item in the `required_information` list that you **do not** already know from the user's profile, you must ask for it from the user.
+                • You must ask for **each piece of this remaining information, one at a time**, in a clear and conversational manner.
+                        
+            - **Special Verification for Certificate RD Numbers:**
+            • There is a **mandatory exception** to the pre-filling rule for certificate numbers.
+            • If the `required_information` list contains **"Caste Certificate RD Number"** or **"Income Certificate RD Number"**, you MUST ALWAYS ask the user to enter them, even if you have this information in their fetched profile. This is for verification.
+
+            • **After the user enters a number, you must perform a check:**
+                - **If the user gave consent (and you have a profile):** You MUST compare the number the user entered with the corresponding number from their fetched profile.
+                    - **If they match:** Acknowledge it (e.g., "Thank you, that's verified.") and proceed to the next required item.
+                    - **If they do NOT match:** You MUST inform the user of the mismatch and ask again. For example: "The RD number you entered does not match our records. Please check the certificate and enter the number again." You cannot proceed with the application until it matches.
+                - **If the user did NOT give consent (and you have no profile):** You will have nothing to compare against, so you must accept the number the user provides and move on to the next item.
+
+            • **If the user did not give consent:** You will not have any pre-filled information, so you must ask for every item on the `required_information` list, starting with the Aadhaar Number.
+
+        • Once you have collected one piece of information, acknowledge it and immediately ask for the next one on the list until all required information has been gathered (either from the user or from their profile).
+    
         • Document Collection: After gathering the required information, you MUST begin the document collection process.
             a.  Refer to the `supporting_documents` list that was provided for the specific scheme the user is applying for.
             b.  You must request **each document from that list, one at a time**, in a clear and conversational manner. For example: "Great. The first document we need is the **[Document Name from the list]**."
@@ -96,5 +118,5 @@ root_agent = LlmAgent(
     - Always provide the final Application ID to the user once submission is complete.
     - Make sure the whole process is Authentic as the real application process.
     """,
-    tools=[fetch_user_profile, find_eligible_schemes ,save_application, check_application_status, generate_application_pdf]
+    tools=[fetch_user_profile, get_all_schemes_with_criteria ,save_application, check_application_status, generate_application_pdf]
 )

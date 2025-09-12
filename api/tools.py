@@ -1,4 +1,4 @@
-def save_application(app_uuid: str, scheme_name: str, aadhar_number: str, applicant_name: str, phone: str) -> dict:
+async def save_application(app_uuid: str, scheme_name: str, aadhar_number: str, applicant_name: str, phone: str) -> dict:
     """
     Save a new scheme application into the database.
 
@@ -33,7 +33,7 @@ def save_application(app_uuid: str, scheme_name: str, aadhar_number: str, applic
 
     return {"application_uuid": app_uuid, "status": "Submitted"}
 
-def check_application_status(application_uuid: str) -> dict:
+async def check_application_status(application_uuid: str) -> dict:
     """
     Fetch the status of a scheme application by its UUID.
 
@@ -67,13 +67,13 @@ def check_application_status(application_uuid: str) -> dict:
     else:
         return {"error": "Application not found"}
     
-def calculate_age(dob_str):
+async def calculate_age(dob_str):
     from datetime import datetime, date
     born = datetime.strptime(dob_str, "%Y-%m-%d").date()
     today = date.today()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
-def fetch_user_profile(aadhaar_number: str) -> str:
+async def fetch_user_profile(aadhaar_number: str) -> str:
     """
     Simulates fetching user data from DigiLocker using their Aadhaar number.
     It retrieves the user's profile from a local database.
@@ -100,13 +100,13 @@ def fetch_user_profile(aadhaar_number: str) -> str:
     conn.close()
     if user:
         user_dict = dict(user)
-        user_dict['age'] = calculate_age(user_dict['dob'])
+        user_dict['age'] = await calculate_age(user_dict['dob'])
         return json.dumps(user_dict)
     else:
         return json.dumps({"error": "No user profile found for the provided Aadhaar number."})
     
 
-def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") -> str:
+async def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") -> str:
     """
     Finds government schemes from the database. It can perform three types of searches:
     1. Personalized Search: Finds schemes a user is eligible for based on their profile.
@@ -159,7 +159,7 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
             if profile:
                 if 'age' in profile:
                     conditions.append("(s.min_age <= ? AND s.max_age >= ?)")
-                    params.extend([profile['age'], profile['age']])
+                    params.extend([profile['age']])
                 if 'gender' in profile:
                     conditions.append("s.gender_eligibility IN (?, 'Any')")
                     params.append(profile['gender'])
@@ -194,9 +194,83 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
     
     return json.dumps(schemes_raw)
 
-def generate_application_pdf(application_data_json: str, application_id: str) -> str:
-    # (The corrected function code from above)
-    # ...
+async def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
+    """
+    Fetches a list of government schemes along with all their eligibility criteria.
+
+    Args:
+        scheme_name: If provided, fetches only the specific scheme matching the name.
+                     If empty, fetches all schemes.
+
+    Returns:
+        A JSON string containing a list of schemes, each with its full set of criteria
+        (min_age, max_income, community, etc.) for the agent to analyze.
+    """
+    import sqlite3
+    import json
+    import os
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    DB_PATH = os.getenv("SCHEMES_DB_PATH", "karnataka_schemes.db")
+
+    if not os.path.exists(DB_PATH):
+        return json.dumps({"error": "Database file not found."})
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # The SELECT statement now fetches ALL criteria columns for the agent to use.
+    base_query = """
+        SELECT
+            s.id, s.name, d.name as department_name, s.definition,
+            s.eligibility_summary, s.application_fee, s.required_information, s.supporting_documents,
+            s.min_age, s.max_age, s.gender_eligibility, s.max_annual_income, s.community_eligibility,
+            sg.district
+        FROM schemes s
+        JOIN departments d ON s.department_id = d.id
+        JOIN scheme_geographies sg ON s.id = sg.scheme_id
+    """
+    params = []
+    
+    if scheme_name:
+        query = f"{base_query} WHERE s.name LIKE ? GROUP BY s.id"
+        params.append(f"%{scheme_name}%")
+    else:
+        # If no specific name, fetch ALL schemes.
+        query = f"{base_query} GROUP BY s.id"
+
+    cursor.execute(query, params)
+    schemes_raw = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    # Process JSON fields before returning
+    for scheme in schemes_raw:
+        scheme['required_information'] = json.loads(scheme.get('required_information') or '[]')
+        scheme['supporting_documents'] = json.loads(scheme.get('supporting_documents') or '[]')
+        scheme['community_eligibility'] = json.loads(scheme.get('community_eligibility') or '[]')
+
+
+    if not schemes_raw:
+        return json.dumps({"message": "No schemes found."})
+    
+    return json.dumps(schemes_raw)
+
+async def generate_application_pdf(application_data_json: str, application_id: str) -> str:
+    """
+    Generates a PDF, reads it as a BLOB, and then UPDATES the existing application
+    record in the database to store this BLOB.
+
+    Args:
+        application_data_json: A JSON string of all collected application information.
+        application_id: The unique UUID of the application record to update, which was
+                        generated by the save_application tool.
+
+    Returns:
+        A JSON string confirming that the PDF was generated and attached to the record.
+    """
+    import sqlite3
     import json
     import os
     from reportlab.pdfgen import canvas
@@ -204,6 +278,8 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
     from reportlab.platypus import Paragraph
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.enums import TA_LEFT
+
+    DB_PATH = os.getenv("APPLICATION_DB_PATH")
 
     def flatten_nested_data(data_dict, parent_key='', separator=' - '):
         """Helper function to flatten nested dictionary."""
@@ -222,10 +298,13 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
                 flattened[new_key] = value
         return flattened
 
+    filename = f"{application_id}.pdf"
+    pdf_blob = None
+
     try:
+        # Step 1: Generate the PDF and save it temporarily
         data_dict = json.loads(application_data_json)
         flattened_data = flatten_nested_data(data_dict)
-        filename = f"{application_id}.pdf"
         
         c = canvas.Canvas(filename, pagesize=letter)
         width, height = letter
@@ -279,8 +358,27 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
             y_position -= entry_spacing
             
         c.save()
-        pdf_path = os.path.abspath(filename)
-        return json.dumps({"pdf_path": pdf_path})
+
+        # Step 2: Read the temporary file into a binary BLOB
+        with open(filename, 'rb') as f:
+            pdf_blob = f.read()
+
+        # Step 3: UPDATE the existing database record with the BLOB
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "UPDATE applications SET application_pdf = ? WHERE application_uuid = ?",
+            (pdf_blob, application_id)
+        )
+        conn.commit()
+        conn.close()
+
+        # Step 4: Delete the temporary PDF file
+        if os.path.exists(filename):
+            os.remove(filename)
+
+        return {"filename": filename}
 
     except Exception as e:
-        return json.dumps({"error": f"Failed to generate PDF: {str(e)}"})
+        return json.dumps({"status": "Error", "error": f"Failed to generate and attach PDF: {str(e)}"})
