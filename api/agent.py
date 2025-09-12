@@ -57,13 +57,12 @@ root_agent = LlmAgent(
             - **Handling Pre-filled Information (if user gave consent):**
                 • Before asking the user for a piece of information, you MUST first check if you already know it from the user's profile that you fetched earlier.
                 • If an item in the `required_information` list matches a detail you already have from their profile, you MUST NOT ask for it again. You will use the value from their profile automatically.
+                (THIS CONDITION DOESNT APPLY FOR CERTIFICATE RD NUMBERS)
 
             - **Handling Information Collection (for all users):**
                 • For any item in the `required_information` list that you **do not** already know from the user's profile, you must ask for it from the user.
                 • You must ask for **each piece of this remaining information, one at a time**, in a clear and conversational manner.
-            
-            • **If the user did not give consent:** You will not have any pre-filled information, so you must ask for every item on the `required_information` list, starting with the Aadhaar Number.
-            
+                        
             - **Special Verification for Certificate RD Numbers:**
             • There is a **mandatory exception** to the pre-filling rule for certificate numbers.
             • If the `required_information` list contains **"Caste Certificate RD Number"** or **"Income Certificate RD Number"**, you MUST ALWAYS ask the user to enter them, even if you have this information in their fetched profile. This is for verification.
@@ -73,7 +72,9 @@ root_agent = LlmAgent(
                     - **If they match:** Acknowledge it (e.g., "Thank you, that's verified.") and proceed to the next required item.
                     - **If they do NOT match:** You MUST inform the user of the mismatch and ask again. For example: "The RD number you entered does not match our records. Please check the certificate and enter the number again." You cannot proceed with the application until it matches.
                 - **If the user did NOT give consent (and you have no profile):** You will have nothing to compare against, so you must accept the number the user provides and move on to the next item.
-        
+
+            • **If the user did not give consent:** You will not have any pre-filled information, so you must ask for every item on the `required_information` list, starting with the Aadhaar Number.
+
         • Once you have collected one piece of information, acknowledge it and immediately ask for the next one on the list until all required information has been gathered (either from the user or from their profile).
     
         • Document Collection: After gathering the required information, you MUST begin the document collection process.
@@ -84,7 +85,7 @@ root_agent = LlmAgent(
         • Always continue smoothly to the next step.
 
     - Once all required details are gathered:
-        • Final Confirmation Step: Before submitting, you MUST present all collected details (including name of the documents attached) along with the scheme name to the user for a final review.
+        • Final Confirmation Step: Before submitting, you MUST present a summary of all collected details (including name of the documents attached) along with the scheme name to the user for a final review.
         • Explicitly ask for their confirmation to proceed, for example: "I have the following details for your application: <details>. Shall I proceed with submitting your application?"
         • Handle User's Confirmation:
             - **If the user confirms ('yes', 'proceed', 'submit it'):**
