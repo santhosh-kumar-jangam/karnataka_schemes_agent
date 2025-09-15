@@ -1,7 +1,7 @@
 import sqlite3
 
-conn = sqlite3.connect(r"C:\Users\Santhosh\Desktop\gov schemes agent new\api\databases\karnataka_schemes.db")
+conn = sqlite3.connect(r"C:\Users\Santhosh\Desktop\gov schemes agent new\api\databases\applications.db")
 cursor = conn.cursor()
-cursor.execute("DROP TABLE applications;")
+cursor.execute("DELETE FROM applications;")
 conn.commit()
 conn.close()
