@@ -4,92 +4,210 @@ import os
 
 DB_FILE = "karnataka_schemes.db"
 
-# --- Data Parsed and Cleaned from the Text File ---
-# This data is embedded directly in the script for simplicity and reliability.
-
-departments_data = [
-    {'id': 1150, 'name': 'Karnataka Minorities Development Corporation (KMDC)', 'state': 'Karnataka'},
-    {'id': 1151, 'name': 'Department for Empowerment of Differently Abled and Senior Citizens', 'state': 'Karnataka'},
-    {'id': 1145, 'name': 'e-Governance', 'state': 'Karnataka'},
-    {'id': 1149, 'name': 'Energy Department', 'state': 'Karnataka'},
-    {'id': 1137, 'name': 'Bangalore Water Supply and Sewerage Board (BWSSB)', 'state': 'Karnataka'},
-    {'id': 1133, 'name': 'Education (Examination & Certification Services)', 'state': 'Karnataka'},
-    {'id': 1120, 'name': 'Karnataka State Fire and Emergency Services', 'state': 'Karnataka'},
-    {'id': 1114, 'name': 'Backward Classes Welfare Department', 'state': 'Karnataka'}
-]
-
-# UPDATED schemes_data with the new 'required_information' field
 schemes_data = [
-    {'id': 1, 'name': 'Arivu Educational Renewal Loan Scheme', 'department_id': 1150, 'definition': 'You will receive a loan up to Rs. 1 lakh at an interest rate of 2% per annum.', 'procedure': ['The applicant submits the application.','The application reaches the Case Worker (L1 Officer) at the District Level for verification.','The verified application moves to the Program Officer (L2 Officer) at the District Level.','The application then goes to the Disbursement Officer (L3 Officer) at the State Level.','Finally, the application is pushed from the Disbursement Officer to DBT.'], 'documents': ['Fee Receipt','Study Certificate','Claim Letter including Sanction Order','Previous Year Marksheet','Parent Approval Letter','Collateral Letter'], 'required_information': ['Student Full Name', 'Aadhaar Number', 'Phone Number', 'College Registration Number', 'Course and Year of Study', 'Previous Year Percentage', 'Loan Amount Requested'], 'benefit_type': 'Loan', 'max_benefit_amount': 100000.0, 'interest_rate': 2.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Minority'], 'fee': 30.0, 'eligibility': 'Must have passed the previous year’s examination.'},
-    {'id': 2, 'name': 'Traditional Artisans Scheme / Kayaka Kirana', 'department_id': 1150, 'definition': 'You will receive a loan between Rs. 50,000 to Rs. 1,00,000 at 2% annual interest. A subsidy of 20% of the loan amount or a maximum of up to Rs. 20,000 will be provided.', 'procedure': ['The applicant submits the application.','The application reaches the Case Worker (L1 Officer) at the District Level for verification.','The verified application moves to the Program Officer (L2 Officer) at the District Level.','The application then goes to the Disbursement Officer (L3 Officer) at the State Level.','Finally, the application is pushed from the Disbursement Officer to DBT.'], 'documents': ['Aadhaar Card','Caste Certificate','Income Certificate'], 'required_information': ['Applicant Full Name', 'Aadhaar Number', 'Phone Number', 'Type of Artisan Skill/Occupation', 'Annual Family Income', 'Bank Account Details', 'Loan Amount Required'], 'benefit_type': 'Loan', 'max_benefit_amount': 100000.0, 'interest_rate': 2.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Minority'], 'fee': 30.0, 'eligibility': 'Traditional artisans and skilled occupation holders.'},
-    {'id': 3, 'name': 'Swa Sahaya Sangagalige Uttejena (Self Help Group Encouragement Scheme)', 'department_id': 1150, 'definition': 'Each member of an eligible self-help group will receive Rs. 15,000.', 'procedure': ['The applicant logs into their account.','Search for the scheme in the search bar.','Confirm details like Religion, Caste Category, Gender, Domicile, Age, Farmer status, and caste eligibility under the corporation’s list.'], 'documents': ['Caste & Annual Income Certificate','Aadhaar Card / Ration Card / Electoral ID','Two recent passport size photos','Self Help Group Conduct Book & Bank Account details','Undertaking by all SHG members for loan security','Declaration of assets and liabilities','Aadhaar card copy of the applicant','Confirmation that the SHG has not taken loans from other departments/banks'], 'required_information': ['Self-Help Group (SHG) Name', 'SHG Registration Number', 'Applicant Full Name (Member)', 'Applicant Aadhaar Number', 'Number of Members in SHG', 'SHG Bank Account Details (Account No, IFSC)'], 'benefit_type': 'Financial Assistance', 'max_benefit_amount': 15000.0, 'interest_rate': 0.0, 'min_age': 21, 'max_age': 50, 'gender': 'Female', 'max_income': 9999999.0, 'community': ['Veerashaiva Lingayat', 'Backward Classes (BC/OBC)'], 'fee': 30.0, 'eligibility': 'Female, aged between 21–50 years, belonging to OBC – Veerashaiva Lingayat Community. The applicant must fall under the caste list provided by the Corporation.'},
-    {'id': 4, 'name': 'Arivu Educational Loan Scheme (Fresh) – 2022-23 / Basava Belagu', 'department_id': 1150, 'definition': 'A loan up to Rs. 1,00,000 per annum for 5 years from the Corporation for education purposes.', 'procedure': ['The applicant submits the application.','The application reaches the Case Worker (L1 Officer) at the District Level.','The verified application moves to the Program Officer (L2 Officer) at the District Level.','Then to the Disbursement Officer (L3 Officer) at the State Level.','Finally, it is pushed to DBT for disbursement.'], 'documents': ['Aadhaar Card','Caste Certificate','Income Certificate','Parent Approval Letter','Collateral Letter'], 'required_information': ['Student Full Name', 'Aadhaar Number', 'Phone Number', 'CET/NEET Registration Number', 'College and Course Details', 'Annual Family Income', 'Loan Amount Requested'], 'benefit_type': 'Loan', 'max_benefit_amount': 100000.0, 'interest_rate': 0.0, 'min_age': 18, 'max_age': 30, 'gender': 'Any', 'max_income': 350000.0, 'community': ['Veerashaiva Lingayat', 'Backward Classes (BC/OBC)'], 'fee': 30.0, 'eligibility': 'Must belong to the OBC – Veerashaiva Lingayat Community. Annual family income up to Rs. 3,50,000. Age: 18–30 years.'},
-    {'id': 5, 'name': 'Application for Foreign Education Loan Scheme', 'department_id': 1150, 'definition': 'A loan up to Rs. 7,50,000 per annum for 2 years for higher education abroad.', 'procedure': ['The applicant submits the application.','The application reaches the Case Worker (L1 Officer) at the District Level.','The verified application moves to the Program Officer (L2 Officer) at the District Level.','Then to the Disbursement Officer (L3 Officer) at the State Level.','Finally, it is pushed to DBT for disbursement.'], 'documents': ['Aadhaar Card','Caste Certificate','Income Certificate','Parent Approval Letter','Collateral Letter'], 'required_information': ['Student Full Name', 'Aadhaar Number', 'Passport Number', 'Foreign University Name and Course', 'Annual Family Income', 'Loan Amount Requested'], 'benefit_type': 'Loan', 'max_benefit_amount': 750000.0, 'interest_rate': 0.0, 'min_age': 18, 'max_age': 35, 'gender': 'Any', 'max_income': 800000.0, 'community': ['Veerashaiva Lingayat', 'Backward Classes (BC/OBC)'], 'fee': 30.0, 'eligibility': 'Must belong to the OBC – Veerashaiva Lingayat Community. Annual family income up to Rs. 8,00,000. Age: 18–35 years.'},
-    {'id': 6, 'name': 'Ganga Kalyana Scheme', 'department_id': 1150, 'definition': 'Financial assistance up to Rs. 4.5 lakh for drilling a borewell, installing a pump set, and energizing it.', 'procedure': ['The applicant submits the application.','The application reaches the Case Worker (L1 Officer) at the District Level.','The verified application moves to the Program Officer (L2 Officer) at the District Level.','Then to the Disbursement Officer (L3 Officer) at the State Level.','Finally, it is pushed to DBT for disbursement.'], 'documents': ['Small & Marginal Farmer Certificate.'], 'required_information': ["Farmer's Full Name", 'Aadhaar Number', 'Phone Number', 'Land RTC Number', 'Survey Number of Land', 'Size of Land Holding (in Acres)', 'Annual Family Income'], 'benefit_type': 'Financial Assistance', 'max_benefit_amount': 450000.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 120000.0, 'community': ['Minority'], 'fee': 30.0, 'eligibility': 'Small and marginal farmers. Annual family income up to Rs. 98,000 in rural areas or Rs. 1,20,000 in urban areas.'},
-    {'id': 7, 'name': 'Application for Caste Verification Report – OBC', 'department_id': 1114, 'definition': "This service allows a recruiting department/organisation to seek verification and authenticity of caste and income certificates of applicants from the District Commissioner's committee.", 'procedure': ['The recruiting department informs the DC committee/District Backward Classes office and the candidate.','The applicant fills the form in the Seva Sindhu Portal.','A district officer verifies the documents and initiates a field inspection by the Taluk officer.','The Taluk officer conducts the inspection and submits a report.','The district officer reviews the report and sets up a DC committee meeting.','The DC committee decides on the issuance of the Sindhutva Pramana Patra.'], 'documents': ['Primary school admission extract','Caste Certificate issued by Tahsildar','Passport Photo',"Father’s caste certificate","Father’s school admission extract",'Proof of employment','Last 12 months’ salary slips','RTC Certificate of properties','Land holding certificate','Landless certificate','Ration Card','Aadhaar copy','Family tree'], 'required_information': ['Applicant Full Name', 'Aadhaar Number', 'Name of Recruiting Organization', 'Position/Job Applied For', 'Caste Certificate RD Number', "Father's Name"], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 35.0, 'eligibility': 'Shortlisted candidates from a respective recruiting organisation.'},
-    {'id': 8, 'name': 'Post-matric Scholarship to BC Students', 'department_id': 1114, 'definition': 'Application for post-matric scholarship for Backward Classes (BC) students.', 'procedure': ['The student submits an online application and uploads documents.','Submit hard copies of the application and documents to the college.','The department verifies the application and sanctions the scholarship.'], 'documents': ['Caste and Income Certificate.','Previous year’s marks card.','Aadhaar UID (if available).','Ration Card copy (if available).','Passport size photo.','Bank account in a nationalized bank'], 'required_information': ["Student's SATS ID", "Student's Aadhaar Number", "Parent's Aadhaar Number", 'Caste Certificate RD Number', 'Income Certificate RD Number', 'College and Course Details', 'Bank Account Details'], 'benefit_type': 'Scholarship', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 0.0, 'eligibility': 'As per Department notification.'},
-    {'id': 9, 'name': 'Vidyasiri – Food and Accommodation Scheme', 'department_id': 1114, 'definition': 'Application for the Vidyasiri scheme, which provides financial assistance for food and accommodation to students.', 'procedure': ['The student submits an online application and uploads documents.','Submit hard copies of the application and documents to the college.','The department verifies the application and sanctions the amount.'], 'documents': ['Caste and Income Certificate.','Previous year’s marks card.','Aadhaar UID (if available).','Ration Card copy (if available).','Passport size photo.','Bank account in a nationalized bank'], 'required_information': ["Student's Full Name", "Aadhaar Number", "College and Course Details", "Distance from Home to College (in km)", "Annual Family Income", "Bank Account Details"], 'benefit_type': 'Financial Assistance', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 0.0, 'eligibility': 'As per Department notification.'},
-    {'id': 10, 'name': 'Special Incentives Scholarship to NT/SNT Students', 'department_id': 1114, 'definition': 'Application for special incentive scholarships for Nomadic Tribes (NT) and Semi-Nomadic Tribes (SNT) students.', 'procedure': ['The student submits an online application and uploads documents.','Submit hard copies of the application and documents to the college.','The department verifies the application and sanctions the amount.'], 'documents': ['Caste and Income Certificate.','Previous year’s marks card.','Aadhaar UID (if available).','Ration Card copy (if available).','Passport size photo.','Bank account in a nationalized bank'], 'required_information': ["Student's Full Name", "Aadhaar Number", "Caste (NT/SNT) Certificate RD Number", "College and Course Details", "Bank Account Details"], 'benefit_type': 'Scholarship', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Nomadic Tribes (NT)', 'Semi-Nomadic Tribes (SNT)'], 'fee': 0.0, 'eligibility': 'As per Department notification.'},
-    {'id': 11, 'name': 'Admission to Post-matric Hostels', 'department_id': 1114, 'definition': 'Application for admission to post-matric hostels for students.', 'procedure': ['The student submits the online application and uploads the required documents.','Submit hard copies of the application and documents to the Taluka Backward Classes Welfare Office.','The department verifies the application and sanctions the admission.'], 'documents': ['Caste and Income Certificate.','Previous year’s marks card.','Aadhaar UID (if available).','Ration Card copy (if available).','Passport size photo.'], 'required_information': ["Student's Full Name", "Aadhaar Number", "Previous Course Details and Marks", "Current College and Course Details", "Annual Family Income"], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 0.0, 'eligibility': 'According to a notification issued by the Department.'},
-    {'id': 12, 'name': 'Pre-examination Training to BC Students', 'department_id': 1114, 'definition': 'Application for pre-examination training for Backward Classes (BC) students.', 'procedure': ['The student submits the online application and uploads the required documents.','Submit hard copies of the application and documents to the District Backward Classes Welfare Office.','The department verifies the application and sanctions training benefits.'], 'documents': ['SSLC Marks Card.','Caste and Income Certificate.','Degree Certificate.','Aadhaar Card.','Passport size photo.','Physically challenged certificate (if applicable).','Bank Passbook (front page).'], 'required_information': ["Applicant's Full Name", "Aadhaar Number", "Highest Qualification Details", "Competitive Exam for which training is sought", "Caste and Income Certificate RD Numbers"], 'benefit_type': 'Training', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 0.0, 'eligibility': 'According to a notification issued by the Department.'},
-    {'id': 13, 'name': 'Defence Force Training', 'department_id': 1114, 'definition': 'Application for enrolment in Defence Force Training.', 'procedure': ['Submit the application with attachments and fee payment.','The application is processed by BESCOM.','A Security Deposit (if applicable) is to be paid separately.','The applicant receives confirmation upon completion.'], 'documents': ['SSLC (10th) Marks Card.','PUC Marks Card.','Caste Certificate.','Income Certificate.','Aadhaar Card.','Medical Certificate.','NCC ‘C’ Certificate (if available).','Candidate photo with signature.'], 'required_information': ["Applicant's Full Name", "Aadhaar Number", "Date of Birth", "Physical Measurements (Height, Weight, Chest)", "Educational Qualifications"], 'benefit_type': 'Training', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 40.0, 'eligibility': 'According to a notification issued by the Department.'},
-    {'id': 14, 'name': 'Pre-matric Scholarship to BC Students', 'department_id': 1114, 'definition': 'Application for pre-matric scholarship for Backward Classes (BC) students.', 'procedure': ['The student submits the online application and uploads the required documents.','The department verifies the application and sanctions the scholarship.'], 'documents': ['Student’s SATS ID.','Aadhaar or EID number of student & parent.','Mobile Number.','Caste and Income Certificate.'], 'required_information': ["Student's SATS ID", "Student's Aadhaar Number", "Parent's Aadhaar Number", "Caste and Income Certificate RD Numbers", "School Details"], 'benefit_type': 'Scholarship', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Backward Classes (BC/OBC)'], 'fee': 0.0, 'eligibility': 'According to a notification issued by the Department.'},
-    {'id': 18, 'name': 'Application for Clearance Certificate (High rise Building)', 'department_id': 1120, 'definition': 'Application for obtaining a Clearance Certificate for high-rise buildings.', 'procedure': ['Not specified'], 'documents': ['Covering Letter','Site Plan','Ground Floor Plan','Typical Floor Plan','Elevation','Section','Fire Schematic','Built-up Area Statement','Ownership Document'], 'required_information': ['Owner/Builder Name', 'Project Name', 'Full Site Address', 'Building Height in Meters', 'Total Built-up Area in Sq. Mtrs.'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 0.0, 'eligibility': 'Building height must be above 15 meters.'},
-    {'id': 19, 'name': 'Application for No Objection Certificate (High rise Building)', 'department_id': 1120, 'definition': 'Application for obtaining a No Objection Certificate (NOC) for high-rise buildings.', 'procedure': ['Not specified'], 'documents': ['Covering Letter','Site Plan','Ground Floor Plan','Typical Floor Plan','Elevation','Section','Fire Schematic','Built-up Area Statement','Ownership Document'], 'required_information': ['Owner/Builder Name', 'Project Name', 'Full Site Address', 'Building Height in Meters', 'Total Built-up Area in Sq. Mtrs.'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 250000.0, 'eligibility': 'Building height must be above 15 meters.'},
-    {'id': 25, 'name': 'Correction in Marks Card', 'department_id': 1133, 'definition': 'Application for correction in an existing marks card.', 'procedure': ['The applicant fills the form and uploads the necessary documents.','The department processes the valid application.','The applicant is notified upon delivery.'], 'documents': ['Copy of marks card issued earlier.','Copy of SSLC/PUC marks card.'], 'required_information': ['Student Name', 'Registration Number', 'Year of Examination', 'Details of Correction Required', 'SSLC/PUC Registration Number for reference'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 25.0, 'eligibility': 'Not applicable.'},
-    {'id': 26, 'name': 'Issue of Consolidated Marks Card', 'department_id': 1133, 'definition': 'Application for the issuance of a consolidated marks card.', 'procedure': ['The applicant fills the form and uploads the necessary documents.','The department processes the valid application.','The applicant is notified upon delivery.'], 'documents': ['Copy of all relevant result sheets.','Copy of previously issued marks card.'], 'required_information': ['Student Name', 'Registration Number', 'Course Name', 'Years of Study'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 20.0, 'eligibility': 'Not applicable.'},
-    {'id': 27, 'name': 'Issue of Duplicate Marks Card', 'department_id': 1133, 'definition': 'Application for a duplicate marks card in case of loss of the original.', 'procedure': ['The applicant fills the form and uploads the necessary documents.','The department processes the valid application.','The applicant is notified upon delivery.'], 'documents': ['Photocopy of earlier marks card.','Copy of police complaint for loss.','Copy of newspaper advertisement regarding loss.'], 'required_information': ['Student Name', 'Registration Number', 'Year of Examination', 'Date of Loss of Original Card', 'Police Complaint Number'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 20.0, 'eligibility': 'Not applicable.'},
-    {'id': 28, 'name': 'Issue of Transfer Certificate', 'department_id': 1133, 'definition': 'Application for the issuance of a Transfer Certificate (TC).', 'procedure': ['The applicant fills the form and uploads the necessary documents.','The department processes the valid application.','The applicant is notified upon delivery.'], 'documents': ['Attested copies of marks cards of all semesters/years.','Attested copy of SSLC marks card.','No due certificate from the library and office.','Attested caste certificate (if applicable).'], 'required_information': ['Student Name', 'Registration Number', 'Last Year/Semester of Study', 'Reason for Leaving'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 20.0, 'eligibility': 'Not applicable.'},
-    {'id': 29, 'name': 'Permission for New/Additional Water Supply & UGD Connection (Residential)', 'department_id': 1137, 'definition': 'Permission for new or additional water supply and underground drainage (UGD) connection for residential buildings, excluding apartments.', 'procedure': ['The applicant submits an online form with required documents.','A Water Inspector/Assistant Engineer inspects the premises and provides a recommendation.','The AEE sanctions the connections at the subdivision office.'], 'documents': ['Building plan','Building photo with owner','Lease cum Sale Deed / Sale Deed','Khata','Previous receipts (if available)','Rain Water Harvesting structure (if applicable)','CFO (if STP is applicable)','Occupancy Certificate (if applicable)','NOC (if applicable)'], 'required_information': ['Applicant Name', 'Full Property Address', 'Khata Number', 'Property ID (PID) Number', 'Contact Mobile Number', 'BWSSB RR Number (if any)'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 30.0, 'eligibility': 'Owners/occupiers of buildings in BWSSB serviceable areas who want a water/sanitary connection.'},
-    {'id': 30, 'name': 'Permission for New/Additional Water Supply & UGD Connection (Multi-storied Buildings)', 'department_id': 1137, 'definition': 'Permission for new or additional water supply and underground drainage (UGD) connection for multi-storied buildings.', 'procedure': ['The applicant submits an online form with required documents. The Occupancy Certificate is mandatory.','A Water Inspector/Assistant Engineer inspects the premises and provides a recommendation.','The AEE sanctions the connections at the subdivision office.','For multi-storied buildings, prorata charges are mandatory. Measurements are taken, and the file is escalated to higher authorities.'], 'documents': ['Building plan','Building photo with owner','Lease cum Sale Deed / Sale Deed','Khata','Previous receipts (if available)','Rain Water Harvesting structure (if applicable)','CFO (if STP is applicable)','Occupancy Certificate (mandatory)','NOC (if applicable)'], 'required_information': ['Applicant/Builder Name', 'Full Property Address', 'Khata Number', 'Property ID (PID) Number', 'Number of Units/Flats', 'Occupancy Certificate Number'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 30.0, 'eligibility': 'Owners/occupiers of buildings in BWSSB serviceable areas who want a water/sanitary connection.'},
-    {'id': 31, 'name': 'Replacement of Faulty Meters', 'department_id': 1137, 'definition': 'Residents can request the replacement of faulty water meters.', 'procedure': ['The applicant submits details (RR No., meter make, meter no., last reading) online or at the subdivision office.','AEE forwards the request to a Water Inspector for inspection.','The Water Inspector observes the meter for two consecutive water supplies and submits a report.','If found faulty, the AE recommends replacement. The AEE approves based on stock availability.','A Draftsman issues a new meter to the Water Inspector, who then installs it.'], 'documents': ['Latest Water Bill'], 'required_information': ['Consumer Name', 'RR Number', 'Existing Meter Make and Number', 'Last Meter Reading', 'Contact Number'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 20.0, 'eligibility': 'Bengaluru residents with a valid RR Number and a water/sanitary connection under BWSSB.'},
-    {'id': 32, 'name': 'Transfer of Connection/Ownership (Industrial/Commercial/Others)', 'department_id': 1137, 'definition': 'Change of name in BWSSB water/sanitary connections due to the transfer of property ownership.', 'procedure': ['Applicant submits an online application with details.','A GSC code is generated, and the application is processed within 10 days.','AEE verifies reports and approves the change.','A demand note of Rs.250 is generated. The consumer pays online, and the ownership is updated.'], 'documents': ['Sale Deed','Khatha Extract','Recent tax paid receipt','Water bill','Affidavit'], 'required_information': ['RR Number', 'Existing Owner Name', 'New Owner Name', 'Khata Number', 'Property Address', 'Contact Number'], 'benefit_type': 'Service', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 250.0, 'eligibility': 'Bengaluru residents with a valid RR Number and BWSSB connection.'},
-    {'id': 42, 'name': 'State Scholarship Portal (SSP) – Post-Matric', 'department_id': 1145, 'definition': 'An integrated State Scholarship Portal for sanctioning Post-Matric Scholarships under Government of Karnataka (GoK) schemes. Benefits are transferred directly to Aadhaar-seeded accounts via Direct Benefit Transfer (DBT).', 'procedure': ['Not applicable'], 'documents': ['e-Attestation is used in SSP, validated by the electronic signature of the attestation officer.','The student should enter details like caste/income certificate number, Aadhaar, UDID, University registration number, counselling number, etc.'], 'required_information': ["Student's Aadhaar Number", 'Caste/Income Certificate RD Number', 'University Registration Number', 'Counselling Number (if applicable)', 'UDID Number (if applicable)'], 'benefit_type': 'Scholarship', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 0.0, 'eligibility': 'As per 2021–22 SSP criteria.'},
-    {'id': 44, 'name': 'Hiring of District Consultant – FRUITS (on contract basis)', 'department_id': 1145, 'definition': 'Hiring district-level consultants under the FRUITS scheme for a one-year contract under the District Administration.', 'procedure': ['Hiring of one consultant per district.'], 'documents': ['SSLC Marks Card','Degree Certificate & Marks Card','Experience Certificate'], 'required_information': ['Applicant Full Name', 'Aadhaar Number', 'Date of Birth', 'Highest Educational Qualification', 'Total Years of Relevant Experience', 'Contact Number'], 'benefit_type': 'Employment', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 25.0, 'eligibility': 'BE in Computer Science/Electronics/IT OR Degree in Agriculture/Horticulture/Sericulture/Veterinary Sciences/Fisheries/B.Tech Agriculture OR BCA/MCA'},
-    {'id': 47, 'name': 'Arivu Educational Renewal Loan Scheme', 'department_id': 1150, 'definition': 'You will receive a loan up to ₹1,00,000 at 2% interest per annum.', 'procedure': ['Applicant submits the application.','Application reaches Case Worker (L1, District Level) → verifies and forwards.','Program Officer (L2, District Level) reviews and forwards.','Disbursement Officer (L3, State Level) reviews and forwards.','Application pushed to DBT for disbursement.'], 'documents': ['Fee Receipt','Study Certificate','Upload Claim Letter including Sanction Order','Previous Year Marksheet','Parent Approval Letter','Collateral Letter'], 'required_information': ['Student Full Name', 'Aadhaar Number', 'Phone Number', 'College Registration Number', 'Course and Year of Study', 'Previous Year Percentage', 'Loan Amount Requested'], 'benefit_type': 'Loan', 'max_benefit_amount': 100000.0, 'interest_rate': 2.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Minority'], 'fee': 30.0, 'eligibility': 'Applicant must have passed the previous year’s examination.'},
-    {'id': 48, 'name': 'Unemployment Allowance for Disabilities', 'department_id': 1151, 'definition': 'If approved, the applicant will receive ₹1000/month until employed or reaches 45 years of age.', 'procedure': ['Applicant submits the application.','Case Worker (L1, District Level) verifies and forwards to DDWO.','DDWO (L2) sanctions and forwards to DBT.','DBT disburses the amount to the beneficiary.'], 'documents': ['Disability Certificate/UDID Card (mandatory)','Proof of Unemployment attested by a Gazetted Officer','Registration Certificate from Employment Exchange/Special Employment Exchange'], 'required_information': ['Applicant Full Name', 'Aadhaar Number', 'UDID Card Number', 'Employment Exchange Registration Number', 'Date of Registration', 'Bank Account Details'], 'benefit_type': 'Allowance', 'max_benefit_amount': 1000.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 45, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Disability'], 'fee': 0.0, 'eligibility': 'Applicant must have a Registration Certificate from an Employment Exchange.'},
-    {'id': 49, 'name': 'Prize Money for Merit Scholarship – Disability Students', 'department_id': 1151, 'definition': 'If approved, the applicant will receive a ₹12,000 scholarship.', 'procedure': ['Applicant submits the application.','Case Worker (L1, District Level) verifies and forwards to DDWO.','DDWO (L2) sanctions and forwards to DBT.','DBT disburses the amount to the beneficiary.'], 'documents': ['Disability Certificate/UDID Card (mandatory)','Certificate from School Headmaster/College Principal','Year of passing proof with ≥60% marks','Marks Sheet of the exam'], 'required_information': ['Student Full Name', 'Aadhaar Number', 'UDID Card Number', 'Name of Exam Passed', 'Percentage Scored', 'Bank Account Details'], 'benefit_type': 'Scholarship', 'max_benefit_amount': 12000.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['Disability'], 'fee': 0.0, 'eligibility': "Applicant must have scored ≥60% marks in the previous year's entrance exam."},
-    {'id': 999, 'name': 'Gruha Jyothi Scheme', 'department_id': 1149, 'definition': 'A Karnataka government scheme providing up to 200 free electricity units per month for households.', 'procedure': ['Application through the Seva Sindhu portal with proof of consumption & identity.'], 'documents': ['Aadhaar card copy','Proof of residence (Voter ID, Ration Card, etc.)'], 'required_information': ['Full Name as per Aadhaar', 'Aadhaar Number', 'Electricity Account ID/Connection ID', 'Name of Electricity Supply Company (e.g., BESCOM)', 'Mobile Number for OTP', 'Residential Address Details'], 'benefit_type': 'Subsidy', 'max_benefit_amount': 0.0, 'interest_rate': 0.0, 'min_age': 0, 'max_age': 99, 'gender': 'Any', 'max_income': 9999999.0, 'community': ['General'], 'fee': 0.0, 'eligibility': 'Must be a resident of Karnataka. Should have a residential electricity connection in the applicant’s name. Aadhaar linkage and electricity consumption verification are required.'}
+  {
+    "id": 804,
+    "name": "Application for Issue of Bus Passes to Physically Challenged",
+    "department_id": 76,
+    "definition": "This service is for application of free bus pass by a physically challenged person",
+    "procedure": [
+      "Applicant logs into Seva Sindhu portal.",
+      "Applicant provides the user credentials provided by Drugs Control Department to apply for this service",
+      "Applicant submits the application on Seva Sindhu portal along with necessary supporting documents and makes the payment for the service.",
+      "Applicant to provide clarification through re-submission of documents if requested by the Department",
+      "The approving authority approves and applicant collects the digitally signed certificate or the approving authority rejects and applicant collects the endorsement stating reasons for rejection."
+    ],
+    "documents": [
+      "Disability certificate",
+      "I.D card issued by Directorate for the Empowerment of Differently abled and Seniro Citizens.",
+      "Address proof (voter ID, aadhar card, ration card)",
+      "Passport size photo",
+    ],
+    "required_information": [
+      "Applicant Full Name",
+      "father name",
+      "Aadhaar Number",
+      "Phone Number",
+      "Category (SC, ST, OBC, General)",
+      "Type of employment ('employee of govt organization' or 'Not an employee of govt organization' or 'Employee of Semi-govt organization' or 'Not an employee of Semi-govt organization' )",
+      "Disability Certificate / UDID Card Number (18 digit)",
+      "Type of disability (Hearing, Walking etc)",
+      "Disability percentage (40 percent or above)",
+      "Pass issuing division",
+      "Permanant Address",
+      "Temporary Address",
+      "Medical certificate number"
+    ],
+    "benefit_type": "Service",
+    "max_benefit_amount": 0.0,
+    "interest_rate": 0.0,
+    "min_age": 0,
+    "max_age": 99,
+    "gender": "Any",
+    "max_income": 9999999.0,
+    "community": [
+      "Disability"
+    ],
+    "fee": 25.0,
+    "eligibility": "Physically challenged"
+  },
+  {
+    "id": 1931,
+    "name": "application of Renewal of Bus Passes to Physically Challenged",
+    "department_id": 76,
+    "definition": "This service is an application for Renewal of us pass for Physically Challenged",
+    "procedure": [
+      "Applicant logs into Seva Sindhu portal.",
+      "Applicant provides the user credentials provided by Drugs Control Department to apply for this service",
+      "Applicant submits the application on Seva Sindhu portal along with necessary supporting documents and makes the payment for the service.",
+      "Applicant to provide clarification through re-submission of documents if requested by the Department",
+      "The approving authority approves and applicant collects the digitally signed certificate or the approving authority rejects and applicant collects the endorsement stating reasons for rejection"
+    ],
+    "documents": [
+      "Disability certificate",
+      "I.D card issued by Directorate for the Empowerment of Differently abled and Seniro Citizens.",
+      "Proof of Residential Address",
+      "Passport size photo"
+    ],
+    "required_information": [
+      "Applicant Full Name",
+      "age",
+      "gender",
+      "guardian or father name",
+      "date of birth",
+      "Aadhaar Number",
+      "Phone Number",
+      "Disability Certificate / UDID Card Number",
+      "Residential Address",
+      "Previous Bus Pass Number"
+    ],
+    "benefit_type": "Service",
+    "max_benefit_amount": 0.0,
+    "interest_rate": 0.0,
+    "min_age": 0,
+    "max_age": 99,
+    "gender": "Any",
+    "max_income": 9999999.0,
+    "community": [
+      "Disability"
+    ],
+    "fee": 25.0,
+    "eligibility": "Physically challenged"
+  },
+  {
+    "id": 61,
+    "name": "Application for Senior Citizen Card",
+    "department_id": 15,
+    "definition": "Application for issuance of senior citizen card. This card can be used for availing various concessions and exemptions applicable to senior citizens.",
+    "procedure": [
+      "Application submission (Online, B1/K1 centres, CSC centres)",
+      "The application is routed to the Programme Assistant at the respective district",
+      "Verification by the Programme Assistant. Recommendations of the Programme Assistant are sent to the District Disabled Welfare Officer (DDWO) for review",
+      "Verification by the DDWO. Approve or reject the application request"
+    ],
+    "documents": [
+      "Age proof",
+      "Address proof (voter ID, aadhar card, ration card)",
+    ],
+    "required_information": [
+      "Applicant Full Name",
+      "Aadhaar Number",
+      "Date of Birth",
+      "district",
+      "taluk",
+      "pincode",
+      "Full Residential Address",
+      "gender",
+      "age",
+      "Phone Number for Communication"
+    ],
+    "benefit_type": "Service",
+    "max_benefit_amount": 0.0,
+    "interest_rate": 0.0,
+    "min_age": 60,
+    "max_age": 99,
+    "gender": "Any",
+    "max_income": 9999999.0,
+    "community": [
+      "Senior Citizen",
+      "General"
+    ],
+    "fee": 20.0,
+    "eligibility": "The applicant must be at least 60 years of age. The applicant must be a resident of Karnataka"
+  },
+  {
+    "id": 51,
+    "name": "Self-Employment Scheme",
+    "department_id": 1150,
+    "definition": "Under this scheme, loans and subsidy will be provided to the religious minority communities with the help of Nationalized / Scheduled banks to start or improve a small-scale handicraft industry, service sector and agro-based activities. 33% of the unit cost or maximum of Rs. 1.00 Lakh will be given as a subsidy.",
+    "procedure": [
+      "Applicant submits an online application with all required documents and project report.",
+      "The application is reviewed by the District Officer for eligibility and completeness.",
+      "The application is forwarded to the selected bank for loan sanctioning.",
+      "Upon bank approval, the subsidy is released by KMDC and the loan is disbursed by the bank."
+    ],
+    "documents": [
+      "latest passport size photo",
+      "Caste certificate",
+      "income certificate",
+      "ration card",
+      "Aadhaar card",
+      "passbook"
+    ],
+    "required_information": [
+      "Applicant Full Name",
+      "Aadhaar Number",
+      "Phone Number for Communication",
+      "Date of Birth",
+      "Category (SC/ST)"
+      "Caste Certificate RD Number",
+      "caste name",
+      "Income Certificate RD Number",
+      "Ration Card",
+      "district",
+      "taluk",
+      "hobli",
+      "village",
+      "assembly constituency name",
+      "Full Residential Address",      
+      "Details of the proposed business/activity",
+      "Loan Amount Requested",
+      "Declaration of no prior KMDC loan",
+      "Declaration of no government employee in the family"
+    ],
+    "benefit_type": "Loan with Subsidy",
+    "max_benefit_amount": 100000.0,
+    "interest_rate": 0.0,
+    "min_age": 18,
+    "max_age": 55,
+    "gender": "Any",
+    "max_income": 600000.0,
+    "community": [
+      "Minority"
+    ],
+    "fee": 0.0,
+    "eligibility": "Applicant must belong to a State Religious Minority Community (SC or ST only) and be a permanent resident of the State. Age must be between 18 to 55 years. Annual family income should not exceed Rs. 6.00 lakh. No family member should be a government/PSU employee, and the applicant must not have availed a previous loan from KMDC."
+  }
 ]
 
+# 2. Departments inferred from the schemes above
+departments_data = [
+    {'id': 76, 'name': 'Transport Department', 'state': 'Karnataka'},
+    {'id': 15, 'name': 'Department for Empowerment of Differently Abled and Senior Citizens', 'state': 'Karnataka'},
+    {'id': 1150, 'name': 'Karnataka Minorities Development Corporation (KMDC)', 'state': 'Karnataka'},
+]
+
+# 3. Geography mappings for all four schemes
 geographies_data = [
-    # General state-wide schemes
-    {'scheme_id': 1, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 2, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 3, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 4, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 5, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 6, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 7, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 8, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 9, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 10, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 11, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 12, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 13, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 14, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 18, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 19, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 25, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 26, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 27, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 28, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 42, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 44, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 47, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 48, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 49, 'state': 'Karnataka', 'district': 'All Districts'},
-    {'scheme_id': 999, 'state': 'Karnataka', 'district': 'All Districts'},
-    # BWSSB schemes specific to Bengaluru
-    {'scheme_id': 29, 'state': 'Karnataka', 'district': 'Bengaluru'},
-    {'scheme_id': 30, 'state': 'Karnataka', 'district': 'Bengaluru'},
-    {'scheme_id': 31, 'state': 'Karnataka', 'district': 'Bengaluru'},
-    {'scheme_id': 32, 'state': 'Karnataka', 'district': 'Bengaluru'}
+    {'scheme_id': 804, 'state': 'Karnataka', 'district': 'All Districts'},
+    {'scheme_id': 1931, 'state': 'Karnataka', 'district': 'All Districts'},
+    {'scheme_id': 61, 'state': 'Karnataka', 'district': 'All Districts'},
+    {'scheme_id': 51, 'state': 'Karnataka', 'district': 'All Districts'},
 ]
 
-def create_database():
-    """Creates and populates the SQLite database."""
-    # Delete the old database file if it exists to ensure a clean start
+
+def create_new_database():
+    """Creates a new database file from scratch with the specified schemes."""
     if os.path.exists(DB_FILE):
         os.remove(DB_FILE)
         print(f"Removed existing database file: {DB_FILE}")
@@ -97,87 +215,57 @@ def create_database():
     try:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-
-        # --- 1. Create Tables ---
         print("Creating database tables...")
+
+        # Create Tables with schema matching the template
+        cursor.execute('''CREATE TABLE departments (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, state VARCHAR(100))''')
+        cursor.execute('''
+            CREATE TABLE schemes (
+                id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, department_id INT,
+                definition TEXT, procedure JSON, supporting_documents JSON, required_information JSON,
+                benefit_type VARCHAR(100), max_benefit_amount REAL, interest_rate REAL,
+                min_age INT, max_age INT, gender_eligibility VARCHAR(50), max_annual_income REAL,
+                community_eligibility JSON, application_fee REAL, eligibility_summary TEXT,
+                FOREIGN KEY (department_id) REFERENCES departments(id)
+            )''')
+        cursor.execute('''
+            CREATE TABLE scheme_geographies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, scheme_id INT NOT NULL,
+                state VARCHAR(100), district VARCHAR(100),
+                FOREIGN KEY (scheme_id) REFERENCES schemes(id)
+            )''')
         
-        # Departments Table
-        cursor.execute('''
-        CREATE TABLE departments (
-            id INT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            state VARCHAR(100)
-        )''')
-
-        # Schemes Table - UPDATED with 'required_information' column
-        cursor.execute('''
-        CREATE TABLE schemes (
-            id INT PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            department_id INT,
-            definition TEXT,
-            procedure_steps JSON,
-            supporting_documents JSON,
-            required_information JSON,
-            benefit_type VARCHAR(100),
-            max_benefit_amount REAL,
-            interest_rate REAL,
-            min_age INT,
-            max_age INT,
-            gender_eligibility VARCHAR(50),
-            max_annual_income REAL,
-            community_eligibility JSON,
-            application_fee REAL,
-            eligibility_summary TEXT,
-            FOREIGN KEY (department_id) REFERENCES departments(id)
-        )''')
-
-        # Geographies Table
-        cursor.execute('''
-        CREATE TABLE scheme_geographies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            scheme_id INT NOT NULL,
-            state VARCHAR(100),
-            district VARCHAR(100),
-            FOREIGN KEY (scheme_id) REFERENCES schemes(id)
-        )''')
-
-        # --- 2. Populate Tables ---
-        print("Populating 'departments' table...")
+        print("Populating tables...")
+        # Populate Departments
         for dept in departments_data:
-            cursor.execute("INSERT INTO departments (id, name, state) VALUES (?, ?, ?)",
+            cursor.execute("INSERT OR IGNORE INTO departments (id, name, state) VALUES (?, ?, ?)",
                            (dept['id'], dept['name'], dept['state']))
 
-        print("Populating 'schemes' table...")
+        # Populate Schemes
         for scheme in schemes_data:
             cursor.execute("""
                 INSERT INTO schemes (
-                    id, name, department_id, definition, procedure_steps, 
-                    supporting_documents, required_information, benefit_type, 
-                    max_benefit_amount, interest_rate, min_age, max_age,
-                    gender_eligibility, max_annual_income, community_eligibility,
+                    id, name, department_id, definition, procedure, supporting_documents,
+                    required_information, benefit_type, max_benefit_amount, interest_rate, min_age,
+                    max_age, gender_eligibility, max_annual_income, community_eligibility,
                     application_fee, eligibility_summary
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 scheme['id'], scheme['name'], scheme['department_id'], scheme['definition'],
                 json.dumps(scheme['procedure']), json.dumps(scheme['documents']),
-                json.dumps(scheme['required_information']), scheme['benefit_type'], 
-                scheme['max_benefit_amount'], scheme['interest_rate'],
-                scheme['min_age'], scheme['max_age'], scheme['gender'], scheme['max_income'],
+                json.dumps(scheme['required_information']), scheme['benefit_type'],
+                scheme['max_benefit_amount'], scheme['interest_rate'], scheme['min_age'],
+                scheme['max_age'], scheme['gender'], scheme['max_income'],
                 json.dumps(scheme['community']), scheme['fee'], scheme['eligibility']
             ))
 
-        print("Populating 'scheme_geographies' table...")
+        # Populate Geographies
         for geo in geographies_data:
             cursor.execute("INSERT INTO scheme_geographies (scheme_id, state, district) VALUES (?, ?, ?)",
                            (geo['scheme_id'], geo['state'], geo['district']))
 
-        # --- 3. Commit and Close ---
         conn.commit()
-        print(f"\nSuccessfully created and populated database '{DB_FILE}'")
-        print(f"Total Departments: {len(departments_data)}")
-        print(f"Total Schemes: {len(schemes_data)}")
-        print(f"Total Geography Mappings: {len(geographies_data)}")
+        print(f"\nSuccessfully created new database '{DB_FILE}' with {len(schemes_data)} schemes.")
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
@@ -185,5 +273,6 @@ def create_database():
         if conn:
             conn.close()
 
+
 if __name__ == "__main__":
-    create_database()
+    create_new_database()

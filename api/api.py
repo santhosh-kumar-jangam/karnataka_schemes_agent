@@ -125,7 +125,7 @@ async def download_application_pdf(filename: str):
 
         # Query the PDF blob using filename
         filename = filename[:-4]
-        cursor.execute("SELECT application_pdf FROM applications WHERE application_uuid = ?", (filename,))
+        cursor.execute("SELECT application_pdf FROM applications WHERE application_id = ?", (filename,))
         result = cursor.fetchone()
         conn.close()
 

@@ -1,39 +1,55 @@
-def save_application(app_uuid: str, scheme_name: str, aadhar_number: str, applicant_name: str, phone: str) -> dict:
+async def save_application(aadhaar_number: str, applicant_name: str, phone_number: str, scheme_name: str) -> str:
     """
-    Save a new scheme application into the database.
+    Saves the application record to the database
 
     Args:
-        app_uuid (str): Application ID (uuid)
-        scheme_name (str): Name of the scheme applied for
-        aadhar_number (str): User's Aadhaar number
-        applicant_name (str): Name of the applicant
-        phone (str): Phone number of the applicant
+        aadhaar_number: The applicant's Aadhaar number (must be at least 4 digits).
+        applicant_name: The applicant's full name.
+        phone_number: The applicant's phone number.
+        scheme_name: The name of the scheme they are applying for.
 
     Returns:
-        dict: {"application_uuid": str, "status": str}
+        A JSON string containing the message and the newly generated application ID.
     """
-    import sqlite3, os
+    import sqlite3
+    from datetime import datetime
+    import os
+    import json
 
-    from dotenv import load_dotenv
-    load_dotenv()
+    now = datetime.now()
+    date_str = now.strftime("%Y%m%d")
+    time_str = now.strftime("%H%M%S") 
 
-    DB_PATH = os.getenv("APPLICATION_DB_PATH")
+    if aadhaar_number and len(aadhaar_number) >= 4:
+        aadhaar_last_four = aadhaar_number[-4:]
+    else:
+        aadhaar_last_four = "0000"
 
-    conn = sqlite3.connect(DB_PATH)
+    app_id = f"KN-{date_str}-{time_str}-{aadhaar_last_four}"
+
+    timestamp = now
+    status = "Submitted"
+
+    DB_FILE = os.getenv("APPLICATION_DB_PATH")
+    
+    conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO applications (application_uuid, scheme_name, aadhar_number, applicant_name, phone)
-        VALUES (?, ?, ?, ?, ?)
-        """, (app_uuid, scheme_name, aadhar_number, applicant_name, phone)
+    
+    cursor.execute(
+        """INSERT INTO applications
+           (application_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (app_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp)
     )
-
     conn.commit()
     conn.close()
+    
+    return json.dumps({
+        "message": "Application record created successfully.",
+        "application_id": app_id
+    })
 
-    return {"application_uuid": app_uuid, "status": "Submitted"}
-
-def check_application_status(application_uuid: str) -> dict:
+async def check_application_status(application_uuid: str) -> dict:
     """
     Fetch the status of a scheme application by its UUID.
 
@@ -67,13 +83,13 @@ def check_application_status(application_uuid: str) -> dict:
     else:
         return {"error": "Application not found"}
     
-def calculate_age(dob_str):
+async def calculate_age(dob_str):
     from datetime import datetime, date
     born = datetime.strptime(dob_str, "%Y-%m-%d").date()
     today = date.today()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
-def fetch_user_profile(aadhaar_number: str) -> str:
+async def fetch_user_profile(aadhaar_number: str) -> str:
     """
     Simulates fetching user data from DigiLocker using their Aadhaar number.
     It retrieves the user's profile from a local database.
@@ -100,13 +116,13 @@ def fetch_user_profile(aadhaar_number: str) -> str:
     conn.close()
     if user:
         user_dict = dict(user)
-        user_dict['age'] = calculate_age(user_dict['dob'])
+        user_dict['age'] = await calculate_age(user_dict['dob'])
         return json.dumps(user_dict)
     else:
         return json.dumps({"error": "No user profile found for the provided Aadhaar number."})
     
 
-def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") -> str:
+async def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") -> str:
     """
     Finds government schemes from the database. It can perform three types of searches:
     1. Personalized Search: Finds schemes a user is eligible for based on their profile.
@@ -194,7 +210,7 @@ def find_eligible_schemes(user_profile_json: str = "{}", scheme_name: str = "") 
     
     return json.dumps(schemes_raw)
 
-def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
+async def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
     """
     Fetches a list of government schemes along with all their eligibility criteria.
 
@@ -227,7 +243,7 @@ def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
             s.id, s.name, d.name as department_name, s.definition,
             s.eligibility_summary, s.application_fee, s.required_information, s.supporting_documents,
             s.min_age, s.max_age, s.gender_eligibility, s.max_annual_income, s.community_eligibility,
-            sg.district
+            s.declaration_text, sg.district
         FROM schemes s
         JOIN departments d ON s.department_id = d.id
         JOIN scheme_geographies sg ON s.id = sg.scheme_id
@@ -257,9 +273,20 @@ def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
     
     return json.dumps(schemes_raw)
 
-def generate_application_pdf(application_data_json: str, application_id: str) -> str:
-    # (The corrected function code from above)
-    # ...
+async def generate_application_pdf(application_data_json: str, application_id: str) -> str:
+    """
+    Generates a PDF, reads it as a BLOB, and then UPDATES the existing application
+    record in the database to store this BLOB.
+
+    Args:
+        application_data_json: A JSON string of all collected application information.
+        application_id: The unique UUID of the application record to update, which was
+                        generated by the save_application tool.
+
+    Returns:
+        A JSON string confirming that the PDF was generated and attached to the record.
+    """
+    import sqlite3
     import json
     import os
     from reportlab.pdfgen import canvas
@@ -267,6 +294,8 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
     from reportlab.platypus import Paragraph
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.enums import TA_LEFT
+
+    DB_PATH = os.getenv("APPLICATION_DB_PATH")
 
     def flatten_nested_data(data_dict, parent_key='', separator=' - '):
         """Helper function to flatten nested dictionary."""
@@ -285,10 +314,13 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
                 flattened[new_key] = value
         return flattened
 
+    filename = f"{application_id}.pdf"
+    pdf_blob = None
+
     try:
+        # Step 1: Generate the PDF and save it temporarily
         data_dict = json.loads(application_data_json)
         flattened_data = flatten_nested_data(data_dict)
-        filename = f"{application_id}.pdf"
         
         c = canvas.Canvas(filename, pagesize=letter)
         width, height = letter
@@ -342,8 +374,27 @@ def generate_application_pdf(application_data_json: str, application_id: str) ->
             y_position -= entry_spacing
             
         c.save()
-        pdf_path = os.path.abspath(filename)
-        return json.dumps({"pdf_path": pdf_path})
+
+        # Step 2: Read the temporary file into a binary BLOB
+        with open(filename, 'rb') as f:
+            pdf_blob = f.read()
+
+        # Step 3: UPDATE the existing database record with the BLOB
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "UPDATE applications SET application_pdf = ? WHERE application_id = ?",
+            (pdf_blob, application_id)
+        )
+        conn.commit()
+        conn.close()
+
+        # Step 4: Delete the temporary PDF file
+        if os.path.exists(filename):
+            os.remove(filename)
+
+        return {"filename": filename}
 
     except Exception as e:
-        return json.dumps({"error": f"Failed to generate PDF: {str(e)}"})
+        return json.dumps({"status": "Error", "error": f"Failed to generate and attach PDF: {str(e)}"})

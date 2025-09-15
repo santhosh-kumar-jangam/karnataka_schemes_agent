@@ -1,37 +1,53 @@
-async def save_application(app_uuid: str, scheme_name: str, aadhar_number: str, applicant_name: str, phone: str) -> dict:
+async def save_application(aadhaar_number: str, applicant_name: str, phone_number: str, scheme_name: str) -> str:
     """
-    Save a new scheme application into the database.
+    Saves the application record to the database
 
     Args:
-        app_uuid (str): Application ID (uuid)
-        scheme_name (str): Name of the scheme applied for
-        aadhar_number (str): User's Aadhaar number
-        applicant_name (str): Name of the applicant
-        phone (str): Phone number of the applicant
+        aadhaar_number: The applicant's Aadhaar number (must be at least 4 digits).
+        applicant_name: The applicant's full name.
+        phone_number: The applicant's phone number.
+        scheme_name: The name of the scheme they are applying for.
 
     Returns:
-        dict: {"application_uuid": str, "status": str}
+        A JSON string containing the message and the newly generated application ID.
     """
-    import sqlite3, os
+    import sqlite3
+    from datetime import datetime
+    import os
+    import json
 
-    from dotenv import load_dotenv
-    load_dotenv()
+    now = datetime.now()
+    date_str = now.strftime("%Y%m%d")
+    time_str = now.strftime("%H%M%S") 
 
-    DB_PATH = os.getenv("APPLICATION_DB_PATH")
+    if aadhaar_number and len(aadhaar_number) >= 4:
+        aadhaar_last_four = aadhaar_number[-4:]
+    else:
+        aadhaar_last_four = "0000"
 
-    conn = sqlite3.connect(DB_PATH)
+    app_id = f"KN-{date_str}-{time_str}-{aadhaar_last_four}"
+
+    timestamp = now
+    status = "Submitted"
+
+    DB_FILE = os.getenv("APPLICATION_DB_PATH")
+    
+    conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO applications (application_uuid, scheme_name, aadhar_number, applicant_name, phone)
-        VALUES (?, ?, ?, ?, ?)
-        """, (app_uuid, scheme_name, aadhar_number, applicant_name, phone)
+    
+    cursor.execute(
+        """INSERT INTO applications
+           (application_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (app_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp)
     )
-
     conn.commit()
     conn.close()
-
-    return {"application_uuid": app_uuid, "status": "Submitted"}
+    
+    return json.dumps({
+        "message": "Application record created successfully.",
+        "application_id": app_id
+    })
 
 async def check_application_status(application_uuid: str) -> dict:
     """
@@ -227,7 +243,7 @@ async def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
             s.id, s.name, d.name as department_name, s.definition,
             s.eligibility_summary, s.application_fee, s.required_information, s.supporting_documents,
             s.min_age, s.max_age, s.gender_eligibility, s.max_annual_income, s.community_eligibility,
-            sg.district
+            s.declaration_text, sg.district
         FROM schemes s
         JOIN departments d ON s.department_id = d.id
         JOIN scheme_geographies sg ON s.id = sg.scheme_id
@@ -368,7 +384,7 @@ async def generate_application_pdf(application_data_json: str, application_id: s
         cursor = conn.cursor()
         
         cursor.execute(
-            "UPDATE applications SET application_pdf = ? WHERE application_uuid = ?",
+            "UPDATE applications SET application_pdf = ? WHERE application_id = ?",
             (pdf_blob, application_id)
         )
         conn.commit()
