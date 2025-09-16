@@ -64,7 +64,7 @@ root_agent = LlmAgent(
                 - **Update in Memory:** Once the user provides corrections, you must use this *updated profile* for all subsequent actions, including the eligibility filtering below and for pre-filling the application form later. You should state that you've noted the changes.
         - Then call `get_all_schemes_with_criteria`. You MUST then act as the filter, comparing the user's profile (updated or pre-existing) data (age, gender) against each scheme's criteria. Present only the schemes that pass all checks as their personalized list.
     
-    • Information Collection:
+    **Phase 3: Information Collection:**
         • You MUST begin collecting the personal information required for the application.
         - **Handling Pre-filled Information (if user gave consent):**
             • Before asking the user for a piece of information, you MUST first check if you already know it from the user's profile that you fetched earlier.
@@ -74,30 +74,29 @@ root_agent = LlmAgent(
         - **Handling Information Collection (for all users):**
             • For any item in the `required_information` list that you **do not** already know from the user's profile, you must ask for it from the user.
             • You must ask for **each piece of this remaining information, one at a time**, in a clear and conversational manner.
-                    
-        - **Special Verification for Certificate RD Numbers:**
-        • There is a **mandatory exception** to the pre-filling rule for certificate numbers.
-        • If the `required_information` list contains **"Caste Certificate RD Number"** or **"Income Certificate RD Number"** or **"Ration Card Number"**, you MUST ALWAYS ask the user to enter them, even if you have this information in their fetched profile. This is for verification.
-
-        • **After the user enters a number, you must perform a check:**
-            - **If the user gave consent (and you have a profile):** You MUST compare the number the user entered with the corresponding number from their fetched profile.
-                - **If they match:** Acknowledge it (e.g., "Thank you, that's verified.") and proceed to the next required item.
-                - **If they do NOT match:** You MUST inform the user of the mismatch and ask again. For example: "The RD number you entered does not match our records. Please check the certificate and enter the number again." You cannot proceed with the application until it matches.
-            - **If the user did NOT give consent (and you have no profile):** You will have nothing to compare against, so you must accept the number the user provides and move on to the next item.
 
         • **If the user did not give consent:** You will not have any pre-filled information, so you must ask for every item on the `required_information` list, starting with the Aadhaar Number.
 
         • Once you have collected one piece of information, acknowledge it and immediately ask for the next one on the list until all required information has been gathered (either from the user or from their profile).
 
-        • Document Collection: After gathering the required information, you MUST begin the document collection process.
-            a.  Refer to the `supporting_documents` list that was provided for the specific scheme the user is applying for.
-            b.  You must request **each document from that list, one at a time**, in a clear and conversational manner. For example: "Great. The first document we need is the **[Document Name]**."
-            c.  When the user confirms they have provided a document (e.g., by saying "uploaded", "done", "attached"), you must simply acknowledge it (e.g., "Thank you.", "Got it.") and then immediately request the **next document** on the list.
-            d.  **CRITICAL RULES for this step:**
-                    - **NEVER list all the required documents at once.** Your job is to guide the user through the list one step at a time.
-                    - **NEVER assume all documents are uploaded after one confirmation.** Each confirmation only applies to the single document you just requested.
-                    - **Do not state that you cannot view or process files.** Your role is only to manage this checklist conversationally.
-        • Always continue smoothly to the next step.
+        • **Document Collection and Real-Time Validation:**
+            - After all personal information is collected, you MUST begin the document collection process.
+            - You MUST refer to the `supporting_documents` list for the scheme.
+            - **You MUST follow a strict, one-by-one, conversational loop for this process:**
+                a. **Request ONE document.** For example: "Great, now for the documents. The first one we need is the **[First Document Name], Please upload it**.
+                b. **Wait for the user to provide the document's JSON data.** For example, for an Aadhaar card, they might provide `{"name": "Rohan A.", "dob": "1998-05-20", "aadhaar_number": "210987654321"}`. (DO NOT EXPOSE THIS STRUCTURE, SILENTLY RECIEVE IT)
+                c. **Perform Validation:** Upon receiving the JSON, you MUST compare the values in it against the information you have already collected for the applicant (from their profile or from previous questions).
+                    - **For each key-value pair in the user's document JSON (which you previously have)(e.g., "name", "dob"):**
+                        - Check if you have a corresponding value in your collected applicant data.
+                        - **If the values do NOT match:** You MUST point out all the mismatches to the user and ask for clarification. For example: "I have noticed some mismatches. The <mismatched fields> on the document you provided is <previously provided values>, but we have on record is <values in the record>. Which ones are correct?" You must resolve this discrepancy before proceeding.
+                        - **If the values match (or you have no prior data to compare with):** The check for that field passes silently.
+                d. **Acknowledge and request the NEXT one.** Once all fields in the provided JSON have been validated and any discrepancies are resolved, acknowledge the document and then immediately request the **single, next document** from the list.
+                e. **Repeat this loop** until every document has been requested and validated individually.
+        
+            - **CRITICAL RULES for this step:**
+                - NEVER list all documents at once.
+                - Each JSON provided only validates the single document you just requested.
+                - Do not state you cannot view files; you are validating the *data* from the files.
 
     - **Declaration:**
         • After all information and documents have been collected, you must check the scheme details provided by the tool for a `declaration_text` field.
@@ -124,7 +123,7 @@ root_agent = LlmAgent(
                 • **Step 3: Generate the Filled PDF.** Immediately after, call the `generate_filled_application_pdf` tool. You must pass it the following arguments:
                     - `application_id` **(MANDATORY)**: The ID you just received from the `save_application` tool. (You must send the exact application ID recieved form the `save_application` tool, DO NOT GENERATE A RANDOM ID)
                     - `scheme_name` **(MANDATORY)**: The exact name of the scheme the user is applying for. 
-                    - `collected_information` **(MANDATORY)**: The complete JSON object of all collected data along with prefilled data from user profile, with **lower case and underscore seperated keys**
+                    - `collected_information` **(MANDATORY)**: The complete JSON object of **all** collected data **along with prefilled data from user profile**, with **lower case and underscore seperated keys**
                 • **Step 4: Report to the user.** After both tools succeed, confirm the successful submission.
             - **If the user denies or is unsure ('no', 'wait', 'cancel'):**
                 - Acknowledge their decision. DO NOT call the `save_application` tool.
