@@ -1,6 +1,6 @@
 [
     {
-        "field": "Applicant Full Name",
+        "field": "applicant_full_name",
         "page": 1,
         "x": 300,
         "y": 656.8897637795277,
@@ -8,7 +8,7 @@
         "type": "text"
     },
     {
-        "field": "Date of Birth",
+        "field": "date_of_birth",
         "page": 1,
         "x": 200,
         "y": 626.8897637795277,
@@ -16,7 +16,7 @@
         "type": "text"
     },
     {
-        "field": "Phone Number",
+        "field": "phone_number",
         "page": 1,
         "x": 480,
         "y": 626.8897637795277,
@@ -24,7 +24,7 @@
         "type": "text"
     },
     {
-        "field": "father name",
+        "field": "father_name",
         "page": 1,
         "x": 300,
         "y": 596.8897637795277,
@@ -48,7 +48,7 @@
         "type": "text"
     },
     {
-        "field": "Category (SC, ST, OBC, General)",
+        "field": "category",
         "page": 1,
         "x": 200,
         "y": 517.8897637795277,
@@ -56,7 +56,7 @@
         "type": "text"
     },
     {
-        "field": "Disability Certificate / UDID Card Number (18 digit)",
+        "field": "disability_certificate_uuid_card_number",
         "page": 1,
         "x": 350,
         "y": 431.8897637795277,
@@ -64,7 +64,7 @@
         "type": "text"
     },
     {
-        "field": "Type of disability (Hearing, Walking etc)",
+        "field": "type_of_disability",
         "page": 1,
         "x": 200,
         "y": 404.8897637795277,
@@ -72,7 +72,7 @@
         "type": "text"
     },
     {
-        "field": "Disability percentage (40 percent or above)",
+        "field": "disability_percentage",
         "page": 1,
         "x": 470,
         "y": 404.8897637795277,
@@ -80,7 +80,7 @@
         "type": "text"
     },
     {
-        "field": "Permanent Address",
+        "field": "permanent_address",
         "page": 1,
         "x": 200,
         "y": 314.8897637795277,
@@ -88,7 +88,7 @@
         "type": "text"
     },
     {
-        "field": "Temporary Address",
+        "field": "temporary_address",
         "page": 1,
         "x": 200,
         "y": 253.8897637795277,
@@ -96,7 +96,7 @@
         "type": "text"
     },
     {
-        "field": "Type of employment ('employee of govt organization' or 'Not an employee of govt organization' or 'Employee of Semi-govt organization' or 'Not an employee of Semi-govt organization' )",
+        "field": "type_of_employment",
         "page": 1,
         "x": 200,
         "y": 159.8897637795277,
@@ -104,7 +104,7 @@
         "type": "text"
     },
     {
-        "field": "Pass Issuing Division",
+        "field": "pass_issuing_division",
         "page": 1,
         "x": 200,
         "y": 114.8897637795277,

@@ -1,6 +1,6 @@
 [
     {
-        "field": "Applicant Full Name",
+        "field": "applicant_full_name",
         "page": 1,
         "x": 220,
         "y": 656.8897637795277,
@@ -8,7 +8,7 @@
         "type": "text"
     },
     {
-        "field": "date of birth",
+        "field": "date_of_birth",
         "page": 1,
         "x": 220,
         "y": 626.8897637795277,
@@ -16,7 +16,7 @@
         "type": "text"
     },
     {
-        "field": "Phone Number",
+        "field": "phone_number",
         "page": 1,
         "x": 480,
         "y": 626.8897637795277,
@@ -24,7 +24,7 @@
         "type": "text"
     },
     {
-        "field": "guardian or father name",
+        "field": "father_name",
         "page": 1,
         "x": 220,
         "y": 596.8897637795277,
@@ -48,7 +48,7 @@
         "type": "text"
     },
     {
-        "field": "Category (SC, ST, OBC, General)",
+        "field": "category",
         "page": 1,
         "x": 130,
         "y": 517.8897637795277,
@@ -56,7 +56,7 @@
         "type": "text"
     },
     {
-        "field": "Residential Address",
+        "field": "permanent_address",
         "page": 1,
         "x": 200,
         "y": 431.8897637795277,
@@ -64,7 +64,7 @@
         "type": "text"
     },
     {
-        "field": "Temporary Address",
+        "field": "temporary_address",
         "page": 1,
         "x": 200,
         "y": 369.8897637795277,
@@ -72,7 +72,7 @@
         "type": "text"
     },
     {
-        "field": "Disability Certificate / UDID Card Number",
+        "field": "disability_certificate_UDID_card_number",
         "page": 1,
         "x": 300,
         "y": 271.8897637795277,
@@ -80,7 +80,7 @@
         "type": "text"
     },
     {
-        "field": "Disability percentage (40 percent or above)",
+        "field": "disability_percentage",
         "page": 1,
         "x": 300,
         "y": 231.8897637795277,

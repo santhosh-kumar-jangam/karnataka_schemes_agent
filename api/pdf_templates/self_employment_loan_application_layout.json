@@ -8,7 +8,7 @@
         "type": "text"
     },
     {
-        "field": "Applicant Full Name",
+        "field": "applicant_full_name",
         "page": 1,
         "x": 300,
         "y": 626.8897637795277,
@@ -16,7 +16,7 @@
         "type": "text"
     },
     {
-        "field": "Applicant Full Name",
+        "field": "applicant_full_name",
         "page": 1,
         "x": 300,
         "y": 596.8897637795277,
@@ -56,7 +56,7 @@
         "type": "checkbox"
     },
     {
-        "field": "Date of Birth",
+        "field": "date_of_birth",
         "page": 1,
         "x": 200,
         "y": 486.8897637795277,
@@ -80,7 +80,7 @@
         "type": "text"
     },
     {
-        "field": "Annual Income",
+        "field": "annual_income",
         "page": 1,
         "x": 500,
         "y": 446.8897637795277,
@@ -88,7 +88,7 @@
         "type": "text"
     },
     {
-        "field": "Ration Card",
+        "field": "ration_card",
         "page": 1,
         "x": 200,
         "y": 421.8897637795277,
@@ -96,7 +96,7 @@
         "type": "text"
     },
     {
-        "field": "Phone Number for Communication",
+        "field": "phone_number",
         "page": 1,
         "x": 200,
         "y": 386.8897637795277,
@@ -104,7 +104,7 @@
         "type": "text"
     },
     {
-        "field": "Category (SC/ST)Caste Certificate RD Number",
+        "field": "category",
         "page": 1,
         "x": 200,
         "y": 276.8897637795277,
@@ -112,7 +112,7 @@
         "type": "text"
     },
     {
-        "field": "Caste Certificate RD",
+        "field": "caste_certificate_rd",
         "page": 1,
         "x": 450,
         "y": 276.8897637795277,
@@ -128,7 +128,7 @@
         "type": "text"
     },
     {
-        "field": "caste name",
+        "field": "caste_name",
         "page": 1,
         "x": 300,
         "y": 216.8897637795277,
@@ -136,7 +136,7 @@
         "type": "text"
     },
     {
-        "field": "Income Certificate RD Number",
+        "field": "income_certificate_rd",
         "page": 1,
         "x": 300,
         "y": 186.8897637795277,
@@ -144,7 +144,7 @@
         "type": "text"
     },
     {
-        "field": "Applicant Name Income RD",
+        "field": "applicant_name_income_rd",
         "page": 1,
         "x": 300,
         "y": 156.8897637795277,
@@ -184,7 +184,7 @@
         "type": "text"
     },
     {
-        "field": "assembly constituency name",
+        "field": "assembly_constituency_name",
         "page": 2,
         "x": 300,
         "y": 696.8897637795277,
@@ -200,7 +200,7 @@
         "type": "text"
     },
     {
-        "field": "address",
+        "field": "permanent_address",
         "page": 2,
         "x": 130,
         "y": 591.8897637795277,

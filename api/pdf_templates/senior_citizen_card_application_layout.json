@@ -1,6 +1,6 @@
 [
     {
-        "field": "Applicant Full Name",
+        "field": "applicant_full_name",
         "page": 1,
         "x": 300,
         "y": 656.8897637795277,
@@ -8,7 +8,7 @@
         "type": "text"
     },
     {
-        "field": "Aadhaar Number",
+        "field": "aadhaar_number",
         "page": 1,
         "x": 200,
         "y": 626.8897637795277,
@@ -16,7 +16,7 @@
         "type": "text"
     },
     {
-        "field": "Date of Birth",
+        "field": "date_of_birth",
         "page": 1,
         "x": 480,
         "y": 626.8897637795277,
@@ -40,7 +40,7 @@
         "type": "text"
     },
     {
-        "field": "Phone Number for Communication",
+        "field": "phone_number",
         "page": 1,
         "x": 480,
         "y": 596.8897637795277,
@@ -48,7 +48,7 @@
         "type": "text"
     },
     {
-        "field": "Full Residential Address",
+        "field": "permanent_address",
         "page": 1,
         "x": 200,
         "y": 521.8897637795277,
