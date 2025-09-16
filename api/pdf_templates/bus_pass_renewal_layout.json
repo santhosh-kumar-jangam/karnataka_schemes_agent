@@ -1,0 +1,98 @@
+[
+    {
+        "field": "Applicant Full Name",
+        "page": 1,
+        "x": 220,
+        "y": 656.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "date of birth",
+        "page": 1,
+        "x": 220,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Phone Number",
+        "page": 1,
+        "x": 480,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "guardian or father name",
+        "page": 1,
+        "x": 220,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "age",
+        "page": 1,
+        "x": 130,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "gender",
+        "page": 1,
+        "x": 480,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Category (SC, ST, OBC, General)",
+        "page": 1,
+        "x": 130,
+        "y": 517.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Residential Address",
+        "page": 1,
+        "x": 200,
+        "y": 431.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Temporary Address",
+        "page": 1,
+        "x": 200,
+        "y": 369.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Disability Certificate / UDID Card Number",
+        "page": 1,
+        "x": 300,
+        "y": 271.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Disability percentage (40 percent or above)",
+        "page": 1,
+        "x": 300,
+        "y": 231.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Declaration Agree",
+        "page": 1,
+        "x": 150,
+        "y": 56.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    }
+]

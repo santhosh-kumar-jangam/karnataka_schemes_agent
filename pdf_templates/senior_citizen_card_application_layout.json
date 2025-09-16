@@ -1,0 +1,90 @@
+[
+    {
+        "field": "applicant_full_name",
+        "page": 1,
+        "x": 300,
+        "y": 656.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "aadhaar_number",
+        "page": 1,
+        "x": 200,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "date_of_birth",
+        "page": 1,
+        "x": 480,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "age",
+        "page": 1,
+        "x": 110,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "gender",
+        "page": 1,
+        "x": 230,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "phone_number",
+        "page": 1,
+        "x": 480,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "permanent_address",
+        "page": 1,
+        "x": 200,
+        "y": 521.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "district",
+        "page": 1,
+        "x": 150,
+        "y": 446.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "taluk",
+        "page": 1,
+        "x": 380,
+        "y": 446.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "pincode",
+        "page": 1,
+        "x": 150,
+        "y": 396.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Declaration Agree",
+        "page": 1,
+        "x": 130,
+        "y": 181.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    }
+]

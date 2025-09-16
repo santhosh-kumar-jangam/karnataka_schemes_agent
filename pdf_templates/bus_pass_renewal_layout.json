@@ -1,0 +1,98 @@
+[
+    {
+        "field": "applicant_full_name",
+        "page": 1,
+        "x": 220,
+        "y": 656.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "date_of_birth",
+        "page": 1,
+        "x": 220,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "phone_number",
+        "page": 1,
+        "x": 480,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "father_name",
+        "page": 1,
+        "x": 220,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "age",
+        "page": 1,
+        "x": 130,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "gender",
+        "page": 1,
+        "x": 480,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "category",
+        "page": 1,
+        "x": 130,
+        "y": 517.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "permanent_address",
+        "page": 1,
+        "x": 200,
+        "y": 431.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "temporary_address",
+        "page": 1,
+        "x": 200,
+        "y": 369.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "disability_certificate_UDID_card_number",
+        "page": 1,
+        "x": 300,
+        "y": 271.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "disability_percentage",
+        "page": 1,
+        "x": 300,
+        "y": 231.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Declaration Agree",
+        "page": 1,
+        "x": 150,
+        "y": 56.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    }
+]

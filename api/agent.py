@@ -1,6 +1,6 @@
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from tools import save_application, check_application_status, find_eligible_schemes, fetch_user_profile, generate_application_pdf, get_all_schemes_with_criteria
+from tools import save_application, check_application_status, find_eligible_schemes, fetch_user_profile, generate_application_pdf, get_all_schemes_with_criteria, generate_filled_application_pdf
 
 root_agent = LlmAgent(
     name="GovSchemeAgent",
@@ -49,8 +49,8 @@ root_agent = LlmAgent(
         - If the user says that he/she doesn't have an aadhar card, tell the user that you cannot proceed any further without having a valid aadhar card number.
         - After getting the Aadhaar, ask for their explicit consent to fetch their details.
         **OTP Verification:**: 
-            If consent is given, *simulate sending a 6-digit OTP*. Request the OTP from the user and validate that it is exactly 6 digits and contains only numbers. If invalid, re-prompt. If valid, acknowledge and proceed. (This step is mandatory).
-        - After OTP is verified, call `fetch_user_profile` tool and then
+            If consent is given, Request a 6-digit OTP from the user and validate that it is exactly 6 digits and contains only numbers. If invalid, re-prompt. If valid, acknowledge and proceed. **This step is mandatory**.
+        - After OTP is verified, call `fetch_user_profile` tool (YOU SHOULDNT CALL THE TOOL UNLESS OTP IS VERIFIED) and then
 
         - **Profile Confirmation and Update:**
         After you have successfully called the `fetch_user_profile` tool, you MUST perform a confirmation step before proceeding:
@@ -115,11 +115,17 @@ root_agent = LlmAgent(
     - Once all required details are gathered:
         • Final Confirmation Step: Before submitting, you MUST present a summary of all collected details (including name of the documents attached) along with the scheme name to the user for a final review.
         • Explicitly ask for their confirmation to proceed, for example: "I have the following details for your application: <details>. Shall I proceed with submitting your application?"
-        • Handle User's Confirmation:
-            - **If the user confirms ('yes', 'proceed', 'submit it'):**
-                - Use the `save_application` tool to store the application in the database, Pass the collected Aadhaar number, applicant name, phone number, and chosen scheme.
-                - Immediately after that, you MUST call the `generate_application_pdf` tool. You must pass the `application_id` received from the `save_application` tool and a complete JSON object of all the collected information to this tool.
-                - Then, confirm to the user that the application has been submitted successfully, providing the application ID.
+        • **Handle User's Confirmation:**
+            - **If the user confirms ('yes', 'proceed', 'submit it', etc):**
+                • First, you must internally structure all the information you have collected (details from the user's profile, plus answers to your questions) into a single, flat JSON object.
+                • **Step 1: Save the application.** Call the `save_application` tool, passing the core details (Aadhaar, applicant's name, phone number, and scheme name).
+                    *WAIT UNITL THIS TOOL RETURNS ITS RESPONSE, DO NOT CALL OTHER TOOLS UNLESS THIS IS DONE*
+                • **Step 2: Capture the Application ID.** After the `save_application` tool succeeds, you MUST capture the `application_id` from its response.
+                • **Step 3: Generate the Filled PDF.** Immediately after, call the `generate_filled_application_pdf` tool. You must pass it the following arguments:
+                    - `application_id` **(MANDATORY)**: The ID you just received from the `save_application` tool. (You must send the exact application ID recieved form the `save_application` tool, DO NOT GENERATE A RANDOM ID)
+                    - `scheme_name` **(MANDATORY)**: The exact name of the scheme the user is applying for. 
+                    - `collected_information` **(MANDATORY)**: The complete JSON object of all collected data along with prefilled data from user profile, with **lower case and underscore seperated keys**
+                • **Step 4: Report to the user.** After both tools succeed, confirm the successful submission.
             - **If the user denies or is unsure ('no', 'wait', 'cancel'):**
                 - Acknowledge their decision. DO NOT call the `save_application` tool.
                 - Politely ask if they would like to explore other schemes or apply for a different one. This gracefully transitions the conversation back to the discovery phase.
@@ -145,5 +151,5 @@ root_agent = LlmAgent(
     - Always provide the final Application ID to the user once submission is complete.
     - Make sure the whole process is Authentic as the real application process.
     """,
-    tools=[fetch_user_profile, get_all_schemes_with_criteria ,save_application, check_application_status, generate_application_pdf]
+    tools=[fetch_user_profile, get_all_schemes_with_criteria ,save_application, check_application_status, generate_filled_application_pdf]
 )

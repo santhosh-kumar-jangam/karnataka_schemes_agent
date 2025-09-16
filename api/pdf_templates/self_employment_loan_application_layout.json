@@ -1,0 +1,218 @@
+[
+    {
+        "field": "select_corporation",
+        "page": 1,
+        "x": 300,
+        "y": 656.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Applicant Full Name",
+        "page": 1,
+        "x": 300,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Applicant Full Name",
+        "page": 1,
+        "x": 300,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Financial Year",
+        "page": 1,
+        "x": 300,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "gender_male",
+        "page": 1,
+        "x": 350,
+        "y": 526.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    },
+    {
+        "field": "gender_female",
+        "page": 1,
+        "x": 430,
+        "y": 526.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    },
+    {
+        "field": "gender_others",
+        "page": 1,
+        "x": 510,
+        "y": 526.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    },
+    {
+        "field": "Date of Birth",
+        "page": 1,
+        "x": 200,
+        "y": 486.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "age",
+        "page": 1,
+        "x": 500,
+        "y": 476.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "domicile",
+        "page": 1,
+        "x": 200,
+        "y": 456.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Annual Income",
+        "page": 1,
+        "x": 500,
+        "y": 446.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Ration Card",
+        "page": 1,
+        "x": 200,
+        "y": 421.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Phone Number for Communication",
+        "page": 1,
+        "x": 200,
+        "y": 386.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Category (SC/ST)Caste Certificate RD Number",
+        "page": 1,
+        "x": 200,
+        "y": 276.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Caste Certificate RD",
+        "page": 1,
+        "x": 450,
+        "y": 276.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Name per Caste Certificate",
+        "page": 1,
+        "x": 300,
+        "y": 246.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "caste name",
+        "page": 1,
+        "x": 300,
+        "y": 216.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Income Certificate RD Number",
+        "page": 1,
+        "x": 300,
+        "y": 186.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Applicant Name Income RD",
+        "page": 1,
+        "x": 300,
+        "y": 156.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "district",
+        "page": 2,
+        "x": 150,
+        "y": 756.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "taluk",
+        "page": 2,
+        "x": 400,
+        "y": 756.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "hobli",
+        "page": 2,
+        "x": 150,
+        "y": 726.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "village",
+        "page": 2,
+        "x": 400,
+        "y": 726.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "assembly constituency name",
+        "page": 2,
+        "x": 300,
+        "y": 696.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "purpose_of_loan",
+        "page": 2,
+        "x": 200,
+        "y": 666.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "address",
+        "page": 2,
+        "x": 130,
+        "y": 591.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Declaration Agree",
+        "page": 2,
+        "x": 50,
+        "y": 354.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    }
+]

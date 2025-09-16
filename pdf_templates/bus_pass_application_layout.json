@@ -1,0 +1,122 @@
+[
+    {
+        "field": "applicant_full_name",
+        "page": 1,
+        "x": 300,
+        "y": 656.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "date_of_birth",
+        "page": 1,
+        "x": 200,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "phone_number",
+        "page": 1,
+        "x": 480,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "father_name",
+        "page": 1,
+        "x": 300,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "age",
+        "page": 1,
+        "x": 130,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "gender",
+        "page": 1,
+        "x": 280,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "category",
+        "page": 1,
+        "x": 200,
+        "y": 517.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "disability_certificate_uuid_card_number",
+        "page": 1,
+        "x": 350,
+        "y": 431.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "type_of_disability",
+        "page": 1,
+        "x": 200,
+        "y": 404.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "disability_percentage",
+        "page": 1,
+        "x": 470,
+        "y": 404.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "permanent_address",
+        "page": 1,
+        "x": 200,
+        "y": 314.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "temporary_address",
+        "page": 1,
+        "x": 200,
+        "y": 253.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "type_of_employment",
+        "page": 1,
+        "x": 200,
+        "y": 159.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "pass_issuing_division",
+        "page": 1,
+        "x": 200,
+        "y": 114.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Declaration Agree",
+        "page": 2,
+        "x": 150,
+        "y": 660.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    }
+]

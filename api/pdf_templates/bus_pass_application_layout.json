@@ -1,0 +1,122 @@
+[
+    {
+        "field": "Applicant Full Name",
+        "page": 1,
+        "x": 300,
+        "y": 656.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Date of Birth",
+        "page": 1,
+        "x": 200,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Phone Number",
+        "page": 1,
+        "x": 480,
+        "y": 626.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "father name",
+        "page": 1,
+        "x": 300,
+        "y": 596.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "age",
+        "page": 1,
+        "x": 130,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "gender",
+        "page": 1,
+        "x": 280,
+        "y": 566.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Category (SC, ST, OBC, General)",
+        "page": 1,
+        "x": 200,
+        "y": 517.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Disability Certificate / UDID Card Number (18 digit)",
+        "page": 1,
+        "x": 350,
+        "y": 431.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Type of disability (Hearing, Walking etc)",
+        "page": 1,
+        "x": 200,
+        "y": 404.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Disability percentage (40 percent or above)",
+        "page": 1,
+        "x": 470,
+        "y": 404.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Permanent Address",
+        "page": 1,
+        "x": 200,
+        "y": 314.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Temporary Address",
+        "page": 1,
+        "x": 200,
+        "y": 253.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Type of employment ('employee of govt organization' or 'Not an employee of govt organization' or 'Employee of Semi-govt organization' or 'Not an employee of Semi-govt organization' )",
+        "page": 1,
+        "x": 200,
+        "y": 159.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Pass Issuing Division",
+        "page": 1,
+        "x": 200,
+        "y": 114.8897637795277,
+        "font_size": 10,
+        "type": "text"
+    },
+    {
+        "field": "Declaration Agree",
+        "page": 2,
+        "x": 150,
+        "y": 660.8897637795277,
+        "font_size": 12,
+        "type": "checkbox"
+    }
+]

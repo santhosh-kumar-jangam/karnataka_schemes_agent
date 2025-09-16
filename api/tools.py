@@ -1,4 +1,4 @@
-async def save_application(aadhaar_number: str, applicant_name: str, phone_number: str, scheme_name: str) -> str:
+def save_application(aadhaar_number: str, applicant_name: str, phone_number: str, scheme_name: str) -> str:
     """
     Saves the application record to the database
 
@@ -398,3 +398,282 @@ async def generate_application_pdf(application_data_json: str, application_id: s
 
     except Exception as e:
         return json.dumps({"status": "Error", "error": f"Failed to generate and attach PDF: {str(e)}"})
+
+import json
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from PyPDF2 import PdfReader, PdfWriter
+import os
+ 
+import sqlite3
+DB_PATH = os.getenv("APPLICATION_DB_PATH")
+ 
+def generate_filled_application_pdf(application_id: str, scheme_name:str, collected_information: dict):
+    """
+    Fill a bilingual PDF form based on scheme name with hardcoded defaults
+ 
+    Args:
+        scheme_name (str): Name of the scheme ("Bus Pass" or "Self Employment Loan")
+        collected_information (dict): Dictionary containing field values provided by user
+        output_filename (str, optional): Custom output filename
+    """
+    output_filename=None
+ 
+    scheme_config = {
+        "Application for Issue of Bus Passes to Physically Challenged": {
+            "template": os.path.join("pdf_templates","bus_pass_application.pdf"),
+            "layout": os.path.join("pdf_templates","bus_pass_application_layout.json"),
+            "default_output": f"{application_id}.pdf"
+        },
+        "Self-Employment Scheme": {
+            "template": os.path.join("pdf_templates","self_employment_loan_application.pdf"),
+            "layout": os.path.join("pdf_templates","self_employment_loan_application_layout.json"),
+            "default_output": f"{application_id}.pdf"
+        },
+        "application of Renewal of Bus Passes to Physically Challenged": {
+            "template": os.path.join("pdf_templates","bus_pass_renewal_application.pdf"),
+            "layout": os.path.join("pdf_templates","bus_pass_renewal_layout.json"),
+            "default_output": f"{application_id}.pdf"
+        },
+        "Application for Senior Citizen Card": {
+            "template": os.path.join("pdf_templates","senior_citizen_card_application.pdf"),
+            "layout": os.path.join("pdf_templates","senior_citizen_card_application_layout.json"),
+            "default_output": f"{application_id}.pdf"
+        }
+    }
+ 
+    scheme_key = None
+    for key in scheme_config.keys():
+        if scheme_name.lower().replace(" ", "").replace("_", "") == key.lower().replace(" ", "").replace("_", ""):
+            scheme_key = key
+            break
+ 
+    if not scheme_key:
+        available_schemes = list(scheme_config.keys())
+        raise ValueError(f"Unknown scheme: '{scheme_name}'. Available schemes: {available_schemes}")
+ 
+    config = scheme_config[scheme_key]
+ 
+    final_fields = apply_hardcoded_defaults(scheme_key, collected_information)
+ 
+    print(f"Processing scheme: {scheme_key}")
+    print(f"Template: {config['template']}")
+    print(f"Layout: {config['layout']}")
+    print(f"Output: {output_filename or config['default_output']}")
+    print(f"Applied hardcoded defaults for missing fields")
+ 
+    return process_bilingual_pdf(
+        template_pdf=config["template"],
+        layout_json=config["layout"],
+        output_pdf=output_filename or config["default_output"],
+        field_values=final_fields,
+        application_id=application_id
+    )
+ 
+def apply_hardcoded_defaults(scheme_name, user_fields):
+    """
+    Apply hardcoded defaults for missing fields based on scheme type
+ 
+    Args:
+        scheme_name (str): Name of the scheme
+        user_fields (dict): Fields provided by user
+ 
+    Returns:
+        dict: Complete fields dictionary with defaults applied
+    """
+ 
+    final_fields = user_fields.copy()
+ 
+    if scheme_name == "Application for Issue of Bus Passes to Physically Challenged":
+        scheme_defaults = {
+            "Declaration Agree": True,
+            "Temporary Address": "Same as permanent address",
+        }
+    elif scheme_name == "Self-Employment Scheme":
+        scheme_defaults = {
+            "Declaration Agree": True,
+            "domicile": "Karnataka",
+            "Financial Year": "2025-26"
+        }
+    elif scheme_name == "Application for Senior Citizen Card":
+        scheme_defaults = {
+            "Declaration Agree": "I Agree",
+            "domicile": "Karnataka",
+            "Financial Year": "2025-26"
+        }
+    elif scheme_name == "application of Renewal of Bus Passes to Physically Challenged":
+        scheme_defaults = {
+            "Declaration Agree": True,
+            "Temporary Address": "Same as permanent address",
+        }
+    else:
+        scheme_defaults = {}
+ 
+    for key, default_value in {**scheme_defaults}.items():
+        if key not in final_fields:
+            final_fields[key] = default_value
+            print(f"  ✓ Applied default: {key} = {default_value}")
+ 
+    if scheme_name == "Self-Employment Scheme":
+        gender_fields = ["gender_male", "gender_female", "gender_others"]
+ 
+        if "gender" in final_fields:
+            gender_value = str(final_fields["gender"]).lower()
+            for gf in gender_fields:
+                final_fields[gf] = False
+ 
+            if gender_value in ["male", "m", "ಪುರುಷ"]:
+                final_fields["gender_male"] = True
+            elif gender_value in ["female", "f", "ಮಹಿಳೆ"]:
+                final_fields["gender_female"] = True
+            else:
+                final_fields["gender_others"] = True
+ 
+            print(f"  ✓ Converted gender '{final_fields['gender']}' to checkboxes")
+ 
+    return final_fields
+ 
+ 
+def process_bilingual_pdf(template_pdf, layout_json, output_pdf, field_values, application_id):
+    """
+    Process the bilingual PDF with proper Kannada font support and alignment,
+    then save it into the database as a BLOB, and finally remove the temp file.
+    """
+ 
+    try:
+        pdfmetrics.registerFont(TTFont('NotoKannada', 'NotoSansKannada-Regular.ttf'))
+        kannada_font = 'NotoKannada'
+        print("✓ Using Noto Sans Kannada font for proper text display")
+    except:
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            kannada_font = 'DejaVuSans'
+            print("! Using DejaVu Sans font - may not display all Kannada characters properly")
+        except:
+            kannada_font = 'Helvetica'
+            print("⚠ Warning: Using Helvetica - Kannada text will not display properly")
+            print("Please download NotoSansKannada-Regular.ttf for proper Kannada support")
+ 
+    with open(layout_json, "r", encoding='utf-8') as f:
+        layout = json.load(f)
+ 
+    pages_with_fields = set(fld["page"] for fld in layout)
+    overlay_files = {}
+ 
+    for page_num in pages_with_fields:
+        overlay_filename = f"overlay_page_{page_num}.pdf"
+        c = canvas.Canvas(overlay_filename, pagesize=A4)
+        width, height = A4
+ 
+        for fld in layout:
+            if fld["page"] == page_num:
+                name = fld["field"]
+                if name in field_values:
+                    x = fld["x"]
+                    y = fld["y"]
+                    font_size = fld.get("font_size", 10)
+                    text = str(field_values[name])
+ 
+                    if fld.get("type") == "checkbox" and field_values[name]:
+                        c.setFont("Helvetica", font_size)
+                        c.drawString(x, y, "✓")
+                    elif fld.get("type") != "checkbox":
+                        has_kannada = any(0x0C80 <= ord(char) <= 0x0CFF for char in text)
+ 
+                        if has_kannada:
+                            c.setFont(kannada_font, font_size)
+                            print(f"✓ Using Kannada font for field '{name}': {text}")
+                        else:
+                            c.setFont("Helvetica", font_size)
+ 
+                        multiline_fields = ["address", "purpose_of_loan", "permanent_address",
+                                            "temporary_address", "division_details"]
+ 
+                        if any(field in name.lower() for field in multiline_fields) and len(text) > 45:
+                            lines = wrap_text(text, 45)
+                            for i, line in enumerate(lines[:3]):
+                                line_y = y - (i * 12)
+                                c.drawString(x, line_y, line)
+                        else:
+                            if len(text) > 50:
+                                text = text[:47] + "..."
+                            c.drawString(x, y, text)
+ 
+        c.save()
+        overlay_files[page_num] = overlay_filename
+ 
+    try:
+        reader_base = PdfReader(template_pdf)
+        writer = PdfWriter()
+ 
+        for page_index in range(len(reader_base.pages)):
+            page_num = page_index + 1
+            page_base = reader_base.pages[page_index]
+ 
+            if page_num in overlay_files:
+                try:
+                    overlay_reader = PdfReader(overlay_files[page_num])
+                    page_overlay = overlay_reader.pages[0]
+                    page_base.merge_page(page_overlay)
+                except Exception as e:
+                    print(f"Warning: Could not merge overlay for page {page_num}: {e}")
+ 
+            if "/Annots" in page_base:
+                del page_base["/Annots"]
+ 
+            writer.add_page(page_base)
+ 
+        # Save temp file first
+        with open(output_pdf, "wb") as out_f:
+            writer.write(out_f)
+ 
+        print(f"✓ Bilingual PDF generated successfully: {output_pdf}")
+ 
+        # --- STEP 2: Read PDF into binary BLOB ---
+        with open(output_pdf, "rb") as f:
+            pdf_blob = f.read()
+ 
+        # --- STEP 3: Update DB record ---
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE applications SET application_pdf = ? WHERE application_id = ?",
+            (pdf_blob, application_id)
+        )
+        conn.commit()
+        conn.close()
+        print(f"✓ PDF saved into database for application_id={application_id}")
+ 
+    except Exception as e:
+        print(f"Error creating PDF: {e}")
+    finally:
+        # --- STEP 4: Cleanup temp overlay + output file ---
+        for overlay_file in overlay_files.values():
+            if os.path.exists(overlay_file):
+                os.remove(overlay_file)
+        if os.path.exists(output_pdf):
+            os.remove(output_pdf)
+            print(f"✓ Temporary PDF file deleted: {output_pdf}")
+ 
+ 
+def wrap_text(text, max_chars_per_line):
+    """Intelligently wrap text to fit within specified character limit"""
+    words = text.split()
+    lines = []
+    current_line = ""
+ 
+    for word in words:
+        test_line = current_line + (" " if current_line else "") + word
+        if len(test_line) <= max_chars_per_line:
+            current_line = test_line
+        else:
+            if current_line:
+                lines.append(current_line)
+            current_line = word
+ 
+    if current_line:
+        lines.append(current_line)
+ 
+    return lines
