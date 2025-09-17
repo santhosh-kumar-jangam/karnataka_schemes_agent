@@ -408,6 +408,9 @@ from PyPDF2 import PdfReader, PdfWriter
 import os
  
 import sqlite3
+from dotenv import load_dotenv
+load_dotenv()
+
 DB_PATH = os.getenv("APPLICATION_DB_PATH")
  
 def generate_filled_application_pdf(application_id: str, scheme_name:str, collected_information: dict):
@@ -419,7 +422,6 @@ def generate_filled_application_pdf(application_id: str, scheme_name:str, collec
         collected_information (dict): Dictionary containing field values provided by user
         output_filename (str, optional): Custom output filename
     """
-    output_filename=None
  
     scheme_config = {
         "Application for Issue of Bus Passes to Physically Challenged": {
@@ -461,13 +463,13 @@ def generate_filled_application_pdf(application_id: str, scheme_name:str, collec
     print(f"Processing scheme: {scheme_key}")
     print(f"Template: {config['template']}")
     print(f"Layout: {config['layout']}")
-    print(f"Output: {output_filename or config['default_output']}")
+    print(f"Output: {config['default_output']}")
     print(f"Applied hardcoded defaults for missing fields")
  
     return process_bilingual_pdf(
         template_pdf=config["template"],
         layout_json=config["layout"],
-        output_pdf=output_filename or config["default_output"],
+        output_pdf=config["default_output"],
         field_values=final_fields,
         application_id=application_id
     )
@@ -645,6 +647,8 @@ def process_bilingual_pdf(template_pdf, layout_json, output_pdf, field_values, a
         conn.commit()
         conn.close()
         print(f"✓ PDF saved into database for application_id={application_id}")
+
+        return {"filename": output_pdf}
  
     except Exception as e:
         print(f"Error creating PDF: {e}")
@@ -677,3 +681,25 @@ def wrap_text(text, max_chars_per_line):
         lines.append(current_line)
  
     return lines
+
+if __name__ == "__main__":
+    response = generate_filled_application_pdf(
+        scheme_name="Application for Issue of Bus Passes to Physically Challenged",
+        collected_information={
+        "Applicant Full Name": "Anita Reddy",
+        "Date of Birth": "12/08/1988",
+        "Phone Number": "9876543210",
+        "father name": "Ramesh Reddy",
+        "age": "37",
+        "gender": "Female",
+        "Category (SC, ST, OBC, General)": "OBC",
+        "Disability Certificate / UDID Card Number (18 digit)": "KA/UDID/2025/12345678",
+        "Type of disability (Hearing, Walking etc)": "Locomotor Disability",
+        "Disability percentage (40 percent or above)": "75%",
+        "Permanent Address": "No. 12, 3rd Cross, Hitech City, Serilingampalli, Telangana - 500084",
+        "Temporary Address": "Same as permanent address",
+        "Type of employment ('employee of govt organization' or 'Not an employee of govt organization' or 'Employee of Semi-govt organization' or 'Not an employee of Semi-govt organization' )": "Not an employee of govt organization",
+        "Pass Issuing Division": "Serilingampalli Depot",
+    },
+    application_id="KN-20250916-174806-3346")
+    print(response)

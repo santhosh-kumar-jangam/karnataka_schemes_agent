@@ -78,9 +78,9 @@ async def run_agent(body: AgentRequest):
                     func_response = part.function_response
                     
                     # Now, safely check if this response object has a name and if it matches our target.
-                    if hasattr(func_response, 'name') and func_response.name == 'generate_application_pdf':
+                    if hasattr(func_response, 'name') and func_response.name == 'generate_filled_application_pdf':
                         
-                        print(">>> INTERCEPTED 'generate_application_pdf' function response! <<<")
+                        print(">>> INTERCEPTED 'generate_filled_application_pd' function response! <<<")
                         
                         # The tool's return value is in the 'response' attribute
                         tool_result = func_response.response
