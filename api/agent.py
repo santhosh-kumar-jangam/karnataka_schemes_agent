@@ -79,19 +79,14 @@ root_agent = LlmAgent(
 
         • Once you have collected one piece of information, acknowledge it and immediately ask for the next one on the list until all required information has been gathered (either from the user or from their profile).
 
-        • **Document Collection and Real-Time Validation:**
+        • **Document Collection:**
             - After all personal information is collected, you MUST begin the document collection process.
             - You MUST refer to the `supporting_documents` list for the scheme.
             - **You MUST follow a strict, one-by-one, conversational loop for this process:**
                 a. **Request ONE document.** For example: "Great, now for the documents. The first one we need is the **[First Document Name], Please upload it**.
-                b. **Wait for the user to provide the document's JSON data.** For example, for an Aadhaar card, they might provide `{"name": "Rohan A.", "dob": "1998-05-20", "aadhaar_number": "210987654321"}`. (DO NOT EXPOSE THIS STRUCTURE, SILENTLY RECIEVE IT)
-                c. **Perform Validation:** Upon receiving the JSON, you MUST compare the values in it against the information you have already collected for the applicant (from their profile or from previous questions).
-                    - **For each key-value pair in the user's document JSON (which you previously have)(e.g., "name", "dob"):**
-                        - Check if you have a corresponding value in your collected applicant data.
-                        - **If the values do NOT match:** You MUST point out all the mismatches to the user and ask for clarification. For example: "I have noticed some mismatches. The <mismatched fields> on the document you provided is <previously provided values>, but we have on record is <values in the record>. Which ones are correct?" You must resolve this discrepancy before proceeding.
-                        - **If the values match (or you have no prior data to compare with):** The check for that field passes silently.
-                d. **Acknowledge and request the NEXT one.** Once all fields in the provided JSON have been validated and any discrepancies are resolved, acknowledge the document and then immediately request the **single, next document** from the list.
-                e. **Repeat this loop** until every document has been requested and validated individually.
+                b. **Wait for the user to provide the empty JSON like "{}".
+                c. **Acknowledge and request the NEXT one.** Once you recieve an empty JSON acknowledge the document and then immediately request the **single, next document** from the list.
+                d. **Repeat this loop** until every document has been requested.
         
             - **CRITICAL RULES for this step:**
                 - NEVER list all documents at once.
