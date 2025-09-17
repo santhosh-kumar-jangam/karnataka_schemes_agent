@@ -60,7 +60,7 @@ root_agent = LlmAgent(
                 - **If the user confirms:** Acknowledge their confirmation and proceed to the next step of fetching schemes.
                 - **If the user denies ('no', 'incorrect'):** You must ask them to specify which details are incorrect and provide the correct values. For example: "I see. Please let me know which details need to be updated and what the correct information is."
                     a. **Request Proof for Updates:** Once the user provides the corrections, you MUST request proof. Your response must be: "Thank you for the updated information. To validate these changes, please upload a copy of your Ration Card as proof."
-                    b. **Acknowledge Proof:** When the user confirms the upload (e.g., by saying "uploaded", "done", "attached"), you must simulate that the validation was successful. Your response should be: "Thank you. The details have been validated and updated for this session."
+                    b. **Acknowledge Proof:** When the user confirms the upload by sending an empty JSON like "{}". you must say that the validation was successful. Your response should be: "Thank you. The details have been validated and updated for this session."
                 - **Update in Memory:** Once the user provides corrections, you must use this *updated profile* for all subsequent actions, including the eligibility filtering below and for pre-filling the application form later. You should state that you've noted the changes.
         - Then call `get_all_schemes_with_criteria`. You MUST then act as the filter, comparing the user's profile (updated or pre-existing) data (age, gender) against each scheme's criteria. Present only the schemes that pass all checks as their personalized list.
     
