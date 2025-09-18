@@ -52,15 +52,121 @@ def save_application(aadhaar_number: str, applicant_name: str, phone_number: str
         "application_id": app_id
     })
 
-async def check_application_status(application_uuid: str) -> dict:
+def generate_standard_pdf(scheme_name: str, collected_information_json: str, application_id: str) -> str:
+    """
+    Generates a PDF using ReportLab Platypus, reads it into an in-memory BLOB,
+    and UPDATES the existing application record in the database with this BLOB.
+    This is a pure-Python, self-contained, and reliable method.
+
+    Args:
+        scheme_name: The name of the scheme.
+        collected_information_json: A JSON string of all collected user data.
+        application_id: The unique ID of the application record to update.
+
+    Returns:
+        A JSON string confirming that the PDF was generated and stored in the database.
+    """
+    import json
+    import ast
+    import os
+    import sqlite3
+    from io import BytesIO
+
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    try:
+        # --- Step 1: Setup and Data Preparation ---
+        DB_PATH = os.getenv("SCHEMES_DB_PATH", "karnataka_schemes.db")
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT s.name, d.name as department_name, s.declaration_text FROM schemes s JOIN departments d ON s.department_id = d.id WHERE s.name LIKE ?",
+            (f"%{scheme_name}%",)
+        )
+        scheme_details = dict(cursor.fetchone())
+        conn.close()
+
+        collected_information = ast.literal_eval(collected_information_json) if "'" in collected_information_json else json.loads(collected_information_json)
+
+        # --- Step 2: Setup In-Memory Buffer and ReportLab Styles ---
+        buffer = BytesIO() # Create an in-memory binary stream
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        try:
+            pdfmetrics.registerFont(TTFont('NotoKannada', 'NotoSansKannada-Regular.ttf'))
+            kannada_style = ParagraphStyle('KannadaStyle', parent=styles['BodyText'], fontName='NotoKannada')
+        except:
+            kannada_style = styles['BodyText']
+
+        # --- Step 3: Build the PDF "Story" in memory ---
+        story = []
+        story.append(Paragraph(scheme_details['name'], styles['h1']))
+        story.append(Paragraph(scheme_details['department_name'], styles['h2']))
+        story.append(Spacer(1, 24))
+        story.append(Paragraph("Applicant Details", styles['h3']))
+        data_for_table = []
+        for key, value in collected_information.items():
+            label = key.replace('_', ' ').title()
+            value_str = str(value)
+            has_kannada = any(0x0C80 <= ord(char) <= 0x0CFF for char in value_str)
+            value_paragraph = Paragraph(value_str, kannada_style if has_kannada else styles['BodyText'])
+            data_for_table.append([label, value_paragraph])
+        table = Table(data_for_table, colWidths=[200, 300])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.whitesmoke),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('GRID', (0,0), (-1,-1), 1, colors.lightgrey)
+        ]))
+        story.append(table)
+        story.append(Spacer(1, 24))
+        if scheme_details.get('declaration_text'):
+            story.append(Paragraph("Declaration", styles['h3']))
+            story.append(Paragraph(scheme_details['declaration_text'], styles['Normal']))
+            story.append(Spacer(1, 12))
+            story.append(Paragraph("[ ✓ ] I Agree", styles['Normal']))
+
+        doc.build(story)
+
+        # --- Step 4: Get the BLOB data from the buffer ---
+        pdf_blob = buffer.getvalue()
+        buffer.close()
+
+        # --- Step 5: UPDATE the database record with the BLOB ---
+        DB_PATH = os.getenv("APPLICATION_DB_PATH")
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE applications SET application_pdf = ? WHERE application_id = ?",
+            (pdf_blob, application_id)
+        )
+        conn.commit()
+        conn.close()
+
+        # --- Step 6: Return the final success message ---
+        return json.dumps({
+            "status": "Success",
+            "message": "PDF successfully generated and stored in the application record."
+        })
+
+    except Exception as e:
+        return json.dumps({"status": "Error", "error": f"An unexpected error occurred: {str(e)}"})
+
+async def check_application_status(application_id: str) -> dict:
     """
     Fetch the status of a scheme application by its UUID.
 
     Args:
-        application_uuid (str): Unique application ID
+        application_id (str): Unique application ID
 
     Returns:
-        dict: { "application_uuid": str, "status": str } if found,
+        dict: { "application_id": str, "status": str } if found,
               { "error": "Application not found" } otherwise
     """
     import sqlite3, os
@@ -73,16 +179,16 @@ async def check_application_status(application_uuid: str) -> dict:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT application_uuid, scheme_name, status
+        SELECT application_id, scheme_name, status
         FROM applications
-        WHERE application_uuid = ?
-        """, (application_uuid,)
+        WHERE application_id = ?
+        """, (application_id,)
     )
     row = cursor.fetchone()
     conn.close()
 
     if row:
-        return {"application_uuid": row[0], "scheme_name": row[1], "status": row[2]}
+        return {"application_id": row[0], "scheme_name": row[1], "status": row[2]}
     else:
         return {"error": "Application not found"}
     
@@ -275,6 +381,8 @@ async def get_all_schemes_with_criteria(scheme_name: str = "") -> str:
         return json.dumps({"message": "No schemes found."})
     
     return json.dumps(schemes_raw)
+
+# ----------------------------------------------------------------------------------------------------------
 
 async def generate_application_pdf(application_data_json: str, application_id: str) -> str:
     """
@@ -683,10 +791,3 @@ def wrap_text(text, max_chars_per_line):
         lines.append(current_line)
  
     return lines
-
-if __name__ == "__main__":
-    generate_filled_application_pdf(
-        application_data={},
-        application_id="KN-20250918-113603-8746",
-        scheme_name="Application for Issue of Bus Passes to Physically Challenged"
-    )
