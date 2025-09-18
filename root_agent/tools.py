@@ -150,10 +150,7 @@ def generate_standard_pdf(scheme_name: str, collected_information_json: str, app
         conn.close()
 
         # --- Step 6: Return the final success message ---
-        return json.dumps({
-            "status": "Success",
-            "message": "PDF successfully generated and stored in the application record."
-        })
+        return {"filename": f"{application_id}.pdf"}
 
     except Exception as e:
         return json.dumps({"status": "Error", "error": f"An unexpected error occurred: {str(e)}"})
