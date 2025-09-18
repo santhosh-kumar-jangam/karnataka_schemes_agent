@@ -413,13 +413,13 @@ load_dotenv()
 
 DB_PATH = os.getenv("APPLICATION_DB_PATH")
  
-def generate_filled_application_pdf(application_id: str, scheme_name:str, collected_information: dict):
+def generate_filled_application_pdf(collected_information: dict, application_id: str, scheme_name:str):
     """
     Fill a bilingual PDF form based on scheme name with hardcoded defaults
  
     Args:
-        scheme_name (str): Name of the scheme ("Bus Pass" or "Self Employment Loan")
         collected_information (dict): Dictionary containing field values provided by user
+        scheme_name (str): Name of the scheme ("Bus Pass" or "Self Employment Loan")
         output_filename (str, optional): Custom output filename
     """
  
