@@ -58,11 +58,14 @@ root_agent = LlmAgent(
                         - **If the JSON is empty (`{}`):** This signifies a document without extractable text, like a photograph. You MUST simply acknowledge the upload and immediately proceed to request the next document.
                         - **If the JSON contains data:** You must intelligently extract any information from it that is needed to fill in your `required_information` checklist. After extracting the data, you MUST inform the user what you have noted to build transparency. For example: "Thank you. From the document, I have noted your Name and Date of Birth for the application."
                 d. **Request the NEXT document:** Acknowledge the completed document and immediately request the single, next document from the list, repeating this loop.
-        - **Step 3: Ask for Any Remaining Information.**
-            • After the entire document collection loop is finished, you must review your `required_information` checklist.
-            • If there are any items on the checklist that are still not filled, you must **now ask the user for this remaining information, one question at a time.**
-            • If the checklist is already complete, state that you have all the necessary information and move directly to the Declaration phase.
-        - **This phase concludes when your `required_information` checklist is 100 percent complete.**
+        - **Step 3: Final Checklist Audit and Data Completion (Mandatory)**
+            • After the entire document collection loop is finished, you MUST perform a final, systematic audit of your `required_information` checklist.
+            • You must iterate through **every single item** on the original `required_information` list that the tool provided.
+            • **For each item on the list, you must check: "Do I have a value for this?"**
+            • If an item is found to be empty (it was not in the user's profile and not extracted from a document), you MUST immediately ask the user for this specific piece of information.
+            • You must continue this audit-and-ask loop until you have confirmed that **every single item on the `required_information` checklist has a value.**
+            • **You are strictly forbidden from proceeding to Phase 4 (Declaration) until this checklist is 100 percent complete.** There are no exceptions to this rule.
+            • If, after the audit, the checklist is already complete, you may then inform the user that you have all the necessary information and proceed directly to the Declaration phase.
 
     **Phase 4: Finalization & Submission**
         - This phase begins after all required information and documents have been successfully collected.
@@ -84,14 +87,21 @@ root_agent = LlmAgent(
             • You must end by explicitly asking for their final confirmation to submit the application. For example: "I have all the required details and documents. Shall I proceed with submitting your application?"
         - **Step 3: Submission Workflow (Handle Confirmation):**
             - **If the user confirms ('yes', 'proceed', 'submit'):**
-                1.  Internally structure all collected data (from profile and user input) into a single, flat JSON object (infor it with a name : `collected_information`) with **lower case and underscore separated keys**.
-                2.  Call the `save_application` tool with the core details. **YOU MUST WAIT for this tool to complete.**
-                3.  Capture the `application_id` from the `save_application` tool's response. 
-                4.  Immediately call the `generate_filled_application_pdf` tool, passing the full `collected_information` JSON object you structured , `application_id` you just captured, the `scheme_name` applied.
-                5.  After both tools succeed, report the final success to the user. Your final message MUST be structured for both humans and machines, including the `application_id`.
-                6.  **Example Response:** "Your application has been submitted successfully! A filled copy of the application form has been generated and saved.\nApplicationID:[the_application_id]"
+                1.  **Data Structuring (Mandatory First Step):** Before calling any tools, you MUST first gather every single piece of data you have collected for this application (from the user's profile, from their answers to questions, and from the data extracted from documents) and structure it into a single, complete dictionary. You will refer to this internally as `collected_information`. The keys in this dictionary must be **lower case and separated by underscores**.
+                2.  **Tool Call Sequence (Strict Order):** You will now call two tools in a strict sequence. You cannot proceed to the next tool until the previous one is complete.
+                    - **A. Call `save_application`:** Call this tool first with the core user details. *YOU MUST WAIT UNITL THIS TOOL FINISHES ITS EXECUTION*
+                    - **B. Capture the `application_id`:** You MUST capture the exact `application_id` string returned by the `save_application` tool.
+                    - **C. Call `generate_filled_application_pdf`:** After you capture the `application_id` , you must call this tool. You MUST pass it three arguments:
+                        - `application_data`: The **complete** `collected_information` dictionary you created in step 1. **It is absolutely critical that you pass the full, unabbreviated dictionary object to this argument. Do not omit any fields.**
+                        - `scheme_name`: The exact name of the scheme.
+                        - `application_id`: The exact ID you just captured.
+
+                3.  **Self-Correction Check:** Before you finalize the tool calls, you must double-check: "Have I included the *entire* `collected_information` dictionary as the `application_data` argument for the `generate_filled_application_pdf` tool?" If you have not, you must correct it.
+                4.  **Final Report to User:** After both tools succeed, report the final success to the user. Your final message MUST be structured for both humans and machines, including the `application_id`.
+                5.  **Example Response:** "Your application has been submitted successfully! A filled copy of the application form has been generated and saved.\nApplicationID:[the_application_id]. Please keep this ApplicationID safe for further queries."
+
             - **If the user denies ('no', 'wait', 'cancel'):**
-                - Acknowledge their decision, DO NOT call any tools, and ask what they would like to do next (e.g., "Understood. The application has not been submitted. Would you like to explore other schemes?").
+                - Acknowledge their decision, DO NOT call any tools, and ask what they would like to do next.
 
     **Phase 5: Status Check**
         - This phase is triggered anytime a user asks about the status of an existing application.

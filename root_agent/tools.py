@@ -30,6 +30,9 @@ def save_application(aadhaar_number: str, applicant_name: str, phone_number: str
     timestamp = now
     status = "Submitted"
 
+    from dotenv import load_dotenv
+    load_dotenv()
+
     DB_FILE = os.getenv("APPLICATION_DB_PATH")
     
     conn = sqlite3.connect(DB_FILE)
@@ -406,16 +409,19 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from PyPDF2 import PdfReader, PdfWriter
 import os
- 
+
 import sqlite3
+from dotenv import load_dotenv
+load_dotenv()
+
 DB_PATH = os.getenv("APPLICATION_DB_PATH")
  
-def generate_filled_application_pdf(collected_information: dict, application_id: str, scheme_name:str):
+def generate_filled_application_pdf(application_data: dict, application_id: str, scheme_name:str):
     """
     Fill a bilingual PDF form based on scheme name with hardcoded defaults
  
     Args:
-        collected_information (dict): Dictionary containing field values provided by user
+        application_data (dict): Dictionary containing field values provided by user
         scheme_name (str): Name of the scheme ("Bus Pass" or "Self Employment Loan")
         output_filename (str, optional): Custom output filename
     """
@@ -456,7 +462,7 @@ def generate_filled_application_pdf(collected_information: dict, application_id:
  
     config = scheme_config[scheme_key]
  
-    final_fields = apply_hardcoded_defaults(scheme_key, collected_information)
+    final_fields = apply_hardcoded_defaults(scheme_key, application_data)
  
     print(f"Processing scheme: {scheme_key}")
     print(f"Template: {config['template']}")
@@ -677,3 +683,10 @@ def wrap_text(text, max_chars_per_line):
         lines.append(current_line)
  
     return lines
+
+if __name__ == "__main__":
+    generate_filled_application_pdf(
+        application_data={},
+        application_id="KN-20250918-113603-8746",
+        scheme_name="Application for Issue of Bus Passes to Physically Challenged"
+    )
