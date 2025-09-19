@@ -1,128 +1,104 @@
-def save_application(aadhaar_number: str, applicant_name: str, phone_number: str, scheme_name: str) -> str:
+import sqlite3
+import json
+import ast
+import os
+from datetime import datetime
+from io import BytesIO
+
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+def submit_application_and_generate_pdf(
+    collected_information_json: str,
+    aadhaar_number: str, 
+    applicant_name: str, 
+    phone_number: str, 
+    scheme_name: str, 
+) -> dict:
     """
-    Saves the application record to the database
+    Consolidates the entire submission process into a single, atomic tool.
+    It generates an ID, saves the initial record, creates a PDF BLOB in memory,
+    updates the record with the BLOB, and returns the final filename.
 
     Args:
-        aadhaar_number: The applicant's Aadhaar number (must be at least 4 digits).
+        collected_information_json: A JSON string of all collected data for the PDF.
+        aadhaar_number: The applicant's Aadhaar number.
         applicant_name: The applicant's full name.
         phone_number: The applicant's phone number.
         scheme_name: The name of the scheme they are applying for.
 
     Returns:
-        A JSON string containing the message and the newly generated application ID.
+        A dictionary in the format {"filename": "your-app-id.pdf"} on success,
+        or {"status": "Error", "error": "..."} on failure.
     """
-    import sqlite3
-    from datetime import datetime
-    import os
-    import json
-
-    now = datetime.now()
-    date_str = now.strftime("%Y%m%d")
-    time_str = now.strftime("%H%M%S") 
-
-    if aadhaar_number and len(aadhaar_number) >= 4:
-        aadhaar_last_four = aadhaar_number[-4:]
-    else:
-        aadhaar_last_four = "0000"
-
-    app_id = f"KN-{date_str}-{time_str}-{aadhaar_last_four}"
-
-    timestamp = now
-    status = "Submitted"
-
     from dotenv import load_dotenv
     load_dotenv()
-
-    DB_FILE = os.getenv("APPLICATION_DB_PATH")
     
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        """INSERT INTO applications
-           (application_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (app_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp)
-    )
-    conn.commit()
-    conn.close()
-    
-    return json.dumps({
-        "message": "Application record created successfully.",
-        "application_id": app_id
-    })
+    # Get database paths from environment variables
+    APP_DB_PATH = os.getenv("APPLICATION_DB_PATH")
+    SCHEMES_DB_PATH = os.getenv("SCHEMES_DB_PATH")
 
-def generate_standard_pdf(scheme_name: str, collected_information_json: str, application_id: str) -> str:
-    """
-    Generates a PDF using ReportLab Platypus, reads it into an in-memory BLOB,
-    and UPDATES the existing application record in the database with this BLOB.
-    This is a pure-Python, self-contained, and reliable method.
-
-    Args:
-        scheme_name: The name of the scheme.
-        collected_information_json: A JSON string of all collected user data.
-        application_id: The unique ID of the application record to update.
-
-    Returns:
-        A JSON string confirming that the PDF was generated and stored in the database.
-    """
-    import json
-    import ast
-    import os
-    import sqlite3
-    from io import BytesIO
-
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
+    # --- 1. GENERATE CUSTOM APPLICATION ID ---
+    now = datetime.now()
+    date_str = now.strftime("%Y%m%d")
+    time_str = now.strftime("%H%M%S")
+    aadhaar_last_four = aadhaar_number[-4:] if aadhaar_number and len(aadhaar_number) >= 4 else "0000"
+    app_id = f"KN-{date_str}-{time_str}-{aadhaar_last_four}"
 
     try:
-        # --- Step 1: Setup and Data Preparation ---
-        DB_PATH = os.getenv("SCHEMES_DB_PATH", "karnataka_schemes.db")
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(
+        # --- 2. SAVE INITIAL RECORD TO APPLICATIONS DB ---
+        conn_app = sqlite3.connect(APP_DB_PATH)
+        cursor_app = conn_app.cursor()
+        cursor_app.execute(
+            """INSERT INTO applications
+               (application_id, aadhaar_number, applicant_name, phone_number, scheme_name, status, timestamp) 
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (app_id, aadhaar_number, applicant_name, phone_number, scheme_name, "Submitted", now)
+        )
+        conn_app.commit()
+        conn_app.close()
+
+        # --- 3. GENERATE PDF BLOB IN MEMORY ---
+        # Fetch scheme details from the schemes DB
+        conn_schemes = sqlite3.connect(SCHEMES_DB_PATH)
+        conn_schemes.row_factory = sqlite3.Row
+        cursor_schemes = conn_schemes.cursor()
+        cursor_schemes.execute(
             "SELECT s.name, d.name as department_name, s.declaration_text FROM schemes s JOIN departments d ON s.department_id = d.id WHERE s.name LIKE ?",
             (f"%{scheme_name}%",)
         )
-        scheme_details = dict(cursor.fetchone())
-        conn.close()
+        scheme_details = dict(cursor_schemes.fetchone())
+        conn_schemes.close()
 
+        # Robustly parse the collected info from the agent
         collected_information = ast.literal_eval(collected_information_json) if "'" in collected_information_json else json.loads(collected_information_json)
 
-        # --- Step 2: Setup In-Memory Buffer and ReportLab Styles ---
-        buffer = BytesIO() # Create an in-memory binary stream
+        # Setup ReportLab for in-memory generation
+        buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4)
         styles = getSampleStyleSheet()
-        
         try:
             pdfmetrics.registerFont(TTFont('NotoKannada', 'NotoSansKannada-Regular.ttf'))
             kannada_style = ParagraphStyle('KannadaStyle', parent=styles['BodyText'], fontName='NotoKannada')
         except:
             kannada_style = styles['BodyText']
 
-        # --- Step 3: Build the PDF "Story" in memory ---
+        # Build the PDF "story"
         story = []
         story.append(Paragraph(scheme_details['name'], styles['h1']))
         story.append(Paragraph(scheme_details['department_name'], styles['h2']))
         story.append(Spacer(1, 24))
         story.append(Paragraph("Applicant Details", styles['h3']))
-        data_for_table = []
-        for key, value in collected_information.items():
-            label = key.replace('_', ' ').title()
-            value_str = str(value)
-            has_kannada = any(0x0C80 <= ord(char) <= 0x0CFF for char in value_str)
-            value_paragraph = Paragraph(value_str, kannada_style if has_kannada else styles['BodyText'])
-            data_for_table.append([label, value_paragraph])
+        data_for_table = [[key.replace('_', ' ').title(), str(value)] for key, value in collected_information.items()]
         table = Table(data_for_table, colWidths=[200, 300])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, -1), colors.whitesmoke),
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('GRID', (0,0), (-1,-1), 1, colors.lightgrey)
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)
         ]))
         story.append(table)
         story.append(Spacer(1, 24))
@@ -131,29 +107,25 @@ def generate_standard_pdf(scheme_name: str, collected_information_json: str, app
             story.append(Paragraph(scheme_details['declaration_text'], styles['Normal']))
             story.append(Spacer(1, 12))
             story.append(Paragraph("[ ✓ ] I Agree", styles['Normal']))
-
+        
         doc.build(story)
-
-        # --- Step 4: Get the BLOB data from the buffer ---
         pdf_blob = buffer.getvalue()
         buffer.close()
 
-        # --- Step 5: UPDATE the database record with the BLOB ---
-        DB_PATH = os.getenv("APPLICATION_DB_PATH")
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute(
+        # --- 4. UPDATE THE RECORD WITH THE PDF BLOB ---
+        conn_app = sqlite3.connect(APP_DB_PATH)
+        cursor_app = conn_app.cursor()
+        cursor_app.execute(
             "UPDATE applications SET application_pdf = ? WHERE application_id = ?",
-            (pdf_blob, application_id)
+            (pdf_blob, app_id)
         )
-        conn.commit()
-        conn.close()
+        conn_app.commit()
+        conn_app.close()
 
-        # --- Step 6: Return the final success message ---
-        return {"filename": f"{application_id}.pdf"}
+        return {"filename": f"{app_id}.pdf"}
 
     except Exception as e:
-        return json.dumps({"status": "Error", "error": f"An unexpected error occurred: {str(e)}"})
+        return {"status": "Error", "error": f"An unexpected error occurred: {str(e)}"}
 
 async def check_application_status(application_id: str) -> dict:
     """

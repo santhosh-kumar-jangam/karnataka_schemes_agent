@@ -1,6 +1,6 @@
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from .tools import save_application, check_application_status, fetch_user_profile, get_all_schemes_with_criteria, generate_filled_application_pdf, generate_standard_pdf
+from .tools import check_application_status, fetch_user_profile, get_all_schemes_with_criteria, submit_application_and_generate_pdf
 
 root_agent = LlmAgent(
     name="GovSchemeAgent",
@@ -87,15 +87,11 @@ root_agent = LlmAgent(
             • You must end by explicitly asking for their final confirmation to submit the application. For example: "I have all the required details and documents. Shall I proceed with submitting your application?"
         - **Step 3: Submission Workflow (Handle Confirmation):**
             - **If the user confirms ('yes', 'proceed', 'submit'):**
-                1.  **Data Structuring (Mandatory First Step):** Before calling any tools, you MUST first gather every single piece of data you have collected for this application (from the user's profile, from their answers to questions, and from the data extracted from documents) and structure it into a single, complete JSON. You will refer to this internally as `collected_information`. The keys in this JSONF must be **lower case and separated by underscores**.
-                2.  **Tool Call Sequence (Strict Order):** You will now call two tools in a strict sequence. You cannot proceed to the next tool until the previous one is complete.
-                    - **A. Call `save_application`:** Call this tool first with the core user details. *YOU MUST WAIT UNITL THIS TOOL FINISHES ITS EXECUTION*
-                    - **B. Capture the `application_id`:** You MUST capture the exact `application_id` string returned by the `save_application` tool.
-                    - **C. - **Step 3: Generate the Filled PDF.** After that, call the `generate_standard_pdf` tool, passing the `application_id` you just captured, the `scheme_name`, and the full `collected_information` JSON object.
-
-                3.  **Self-Correction Check:** Before you finalize the tool calls, you must double-check: "Have I included the *entire* `collected_information` JSON as the `application_data` argument for the `generate_standard_pdf` tool?" If you have not, you must correct it.
-                4.  **Final Report to User:** After both tools succeed, report the final success to the user. Your final message MUST be structured for both humans and machines, including the `application_id`.
-                5.  **Example Response:** "Your application has been submitted successfully! A filled copy of the application form has been generated and saved.\nApplicationID:[the_application_id]. Please keep this ApplicationID safe for further queries."
+                1.  Internally structure all collected data into a single, flat JSON object.
+                2.  Call the new `submit_application_and_generate_pdf` tool. You must pass it all the required arguments: The complete `collected_information_json` object, `aadhaar_number`, `applicant_name`, `phone_number`, `scheme_name`.
+                3.  After the tool succeeds, it will return a dictionary like `{"filename": "..."}`. You must capture the `application_id` from this filename (by removing the '.pdf' extension).
+                4.  Report the final success to the user. Your final message MUST be structured for both humans and machines, including the `application_id`.
+                5.  **Example Response:** "Your application has been submitted successfully! A copy of your application has been saved for our records.\nApplicationID:[the_application_id]. Keep the Application ID safe for further enquires."
 
             - **If the user denies ('no', 'wait', 'cancel'):**
                 - Acknowledge their decision, DO NOT call any tools, and ask what they would like to do next.
@@ -125,5 +121,5 @@ root_agent = LlmAgent(
             • **User Guidance:** Always guide the user clearly to the next step.
             • **Finality:** Always provide the final Application ID to the user upon a successful submission.
     """,
-    tools=[fetch_user_profile, get_all_schemes_with_criteria ,save_application, check_application_status, generate_standard_pdf]
+    tools=[fetch_user_profile, get_all_schemes_with_criteria ,submit_application_and_generate_pdf, check_application_status]
 )
